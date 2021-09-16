@@ -12,6 +12,7 @@ min_py = (3, 8)
 # Standard imports.
 ###
 
+import enum
 import os
 import sys
 if sys.version_info < min_py:
@@ -95,4 +96,128 @@ def dorunrun(command:Union[str, list],
 
     except Exception as e:
         raise Exception(f"Unexpected error: {str(e)}")
+
+
+class FakingIt(enum.EnumMeta):
+
+    def __contains__(self, something:object) -> bool:
+        """
+        Normally ... the "in" operator checks if something is in
+        an instance of the container. We want to check if a value
+        is one of the IntEnum class's members.
+        """
+        try:
+            self(something)
+        except ValueError:
+            return False
+
+        return True
+
+
+class ExitCode(enum.IntEnum, metaclass=FakingIt):
+    """
+    This is a comprehensive list of exit codes in Linux, and it 
+    includes four utility functions. Suppose x is an integer:
+
+        x in ExitCode     # is x a valid value?
+        x.OK              # Workaround: enums all evaluate to True, even if they are zero.
+        x.is_signal       # True if the value is a "killed by Linux signal"
+        x.signal          # Which signal, or zero.
+    """
+
+    @property
+    def OK(self) -> bool:
+        return self is ExitCode.SUCCESS
+
+    @property
+    def is_signal(self) -> bool:
+        return ExitCode.KILLEDBYMAX > self > ExitCode.KILLEDBYSIGNAL
+
+    @property 
+    def signal(self) -> int:
+        return self % ExitCode.KILLEDBYSIGNAL if self.is_signal else 0
+
+
+    # All was well.
+    SUCCESS = os.EX_OK
+
+    # It just did not work. No info provided.
+    GENERAL = 1
+
+    # BASH builtin error (e.g. basename)
+    BUILTIN = 2
+    
+    # No device or address by that name was found.
+    NODEVICE = 6
+
+    # Trying to create a user or group that already exists.
+    USERORGROUPEXISTS = 9
+
+    # The execution requires sudo
+    NOSUDO = 10
+
+    ######
+    # Code 64 is also the usage error, and the least number
+    # that has reserved meanings, and nothing above here 
+    # should be used by a user program.
+    ######
+    BASEVALUE = 64
+    # command line usage error
+    USAGE = os.EX_USAGE
+    # data format error
+    DATAERR = os.EX_DATAERR
+    # cannot open input
+    NOINPUT = os.EX_NOINPUT
+    # user name unknown
+    NOUSER = os.EX_NOUSER
+    # host name unknown
+    NOHOST = os.EX_NOHOST
+    # unavailable service or device
+    UNAVAILABLE = os.EX_UNAVAILABLE
+    # internal software error
+    SOFTWARE = os.EX_SOFTWARE
+    # system error
+    OSERR = os.EX_OSERR
+    # Cannot create an ordinary user file
+    OSFILE = os.EX_OSFILE
+    # Cannot create a critical file, or it is missing.
+    CANTCREAT = os.EX_CANTCREAT
+    # input/output error
+    IOERR = os.EX_IOERR
+    # retry-able error
+    TEMPFAIL = os.EX_TEMPFAIL
+    # remotely reported error in protocol
+    PROTOCOL = os.EX_PROTOCOL
+    # permission denied
+    NOPERM = os.EX_NOPERM
+    # configuration file error
+    CONFIG = os.EX_CONFIG
+
+    # The operation was run with a timeout, and it timed out.
+    TIMEOUT = 124
+
+    # The request to run with a timeout failed.
+    TIMEOUTFAILED = 125
+
+    # Tried to execute a non-executable file.
+    NOTEXECUTABLE = 126
+
+    # Command not found (in $PATH)
+    NOSUCHCOMMAND = 127
+
+    ###########
+    # If $? > 128, then the process was killed by a signal.
+    ###########
+    KILLEDBYSIGNAL = 128
+
+    # These are common enough to include in the list.
+    KILLEDBYCTRLC = 130
+    KILLEDBYKILL = 137
+    KILLEDBYPIPE = 141
+    KILLEDBYTERM = 143
+
+    KILLEDBYMAX = 161
+
+    # Nonsense argument to exit()
+    OUTOFRANGE = 255
 
