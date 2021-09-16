@@ -7,48 +7,23 @@ from typing import *
 
 import argparse
 import atexit
-import base64
-import binascii
 import calendar
 import collections
 from   collections.abc import Iterable
-import contextlib
 import copy
 from   ctypes import cdll, byref, create_string_buffer
 import datetime
-import enum
-import errno
-import fcntl
-import fnmatch
-import functools
-from   functools import reduce
-import getpass
-import glob
-import hashlib
 import inspect
-import ipaddress
-import io
-import json
-import locale
-import operator
 import os
-import paramiko
-import pickle
 import platform
 import pprint as pp
 import psutil
-import random
-import resource
 import re
-import shlex
-import shutil
 import signal
 import socket
-import stat
 import string
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import traceback
@@ -664,8 +639,6 @@ def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
         sys.stderr.write("\n")
     else:
         pass
-        # p = pp.PrettyPrinter(indent=4, width=512, stream=sys.stderr)
-        # p.pprint(formatted_stack_trace())
 
     if not silent: sys.stderr.flush()
 
