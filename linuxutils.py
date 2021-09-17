@@ -195,6 +195,16 @@ def getproctitle() -> str:
     except Exception as e:
         return ""
 
+####
+# I
+####
+def iso_time(seconds:int) -> str:
+    return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(seconds))
+
+
+def iso_seconds(timestring:str) -> int:
+    dt = datetime.datetime.strptime(timestring, '%Y-%m-%dT%H:%M')
+    return dt.strftime("%s")
 
 ####
 # M
@@ -215,6 +225,22 @@ def mymem() -> int:
     with info.oneshot():
         return info.memory_full_info().uss
 
+####
+# N
+####
+
+def now_as_seconds() -> int:
+    return time.clock_gettime(0)
+
+
+def now_as_string() -> str:
+    """ Return full timestamp for printing. """
+    return datetime.datetime.now().isoformat()[:21].replace('T',' ')
+
+
+####
+# P
+####
 
 def parse_proc(pid:int) -> dict:
     """
