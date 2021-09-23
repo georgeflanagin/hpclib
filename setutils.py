@@ -17,6 +17,9 @@ __email__ = 'gflanagin@richmond.edu'
 __status__ = 'Prototype'
 
 __license__ = 'MIT'
+
+PHI=frozenset()
+
 # Cheap hack so that "*" means "every{minute|hour|etc}"
 class Universal(set):
     """

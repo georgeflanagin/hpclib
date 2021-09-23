@@ -184,6 +184,15 @@ def explain(code:int) -> str:
 ####
 # G
 ####
+def getgroups(u:str) -> tuple:
+    """
+    Return a tuple of all the groups that "u" belongs to.
+    """
+    groups = [g.gr_name for g in grp.getgrall() if u in g.gr_mem]
+    primary_group = pwd.getpwnam(u).pw_gid
+    groups.append(grp.getgrgid(primary_group).gr_name)
+    return tuple(groups)
+
 
 def getproctitle() -> str:
     global libc
