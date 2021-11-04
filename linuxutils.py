@@ -13,11 +13,13 @@ from   collections.abc import Iterable
 import copy
 from   ctypes import cdll, byref, create_string_buffer
 import datetime
+import grp
 import inspect
 import os
 import platform
 import pprint as pp
 import psutil
+import pwd
 import re
 import signal
 import socket
@@ -204,6 +206,14 @@ def getproctitle() -> str:
     except Exception as e:
         return ""
 
+
+def getusers_in_group(g:str) -> tuple:
+    try:
+        return tuple(grp.getgrnam(g).gr_mem)
+    except KeyError as e:
+        return tuple()
+
+
 ####
 # I
 ####
@@ -277,6 +287,9 @@ def parse_proc(pid:int) -> dict:
             kv[k.lower()[2:]] = int(v.split()[0])
 
     return kv
+
+
+
 
 
 def pids_of(process_name:str, anywhere:Any=None) -> list:

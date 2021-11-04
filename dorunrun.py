@@ -37,7 +37,7 @@ def dorunrun(command:Union[str, list],
     timeout:int=None,
     verbose:bool=False,
     quiet:bool=False,
-    return_datatype:type=bool
+    return_datatype:type=bool,
     ) -> tuple:
     """
     A wrapper around (almost) all the complexities of running child 
