@@ -50,7 +50,11 @@ GREEN="\033[0;32m"
 
 LOCK_NONE = 0
 
-def all_files_in(s:str) -> str:
+####
+# A
+####
+
+def all_files_in(s:str, skip_hidden=False) -> str:
     """
     A generator to cough up the full file names for every
     file in a directory.
@@ -58,7 +62,9 @@ def all_files_in(s:str) -> str:
     s = expandall(s)
     for c, d, files in os.walk(s):
         for f in files:
-            yield os.path.join(c, f)
+            s = os.path.join(c, f)
+            if skip_hidden and is_hidden(s): continue
+            yield s
 
 
 def all_files_like(s:str) -> str:
@@ -69,6 +75,9 @@ def all_files_like(s:str) -> str:
     return [ f for f in all_files_in(os.path.dirname(s)) 
         if fnmatch.fnmatch(os.path.basename(f), os.path.basename(s)) ]
 
+####
+# B
+####
 
 def build_file_list(f:str) -> List[str]:
     """
@@ -266,6 +275,12 @@ def got_data(filenames:str) -> bool:
 ####
 # I
 ####
+def is_hidden(path:str) -> bool:
+    """
+    returns True if the path is hidden
+    """
+    return True if "/." in path else False
+
 
 def is_PDF(o:Union[bytes,str]) -> bool:
     """
@@ -286,6 +301,14 @@ def is_PDF(o:Union[bytes,str]) -> bool:
         shred = o[:7]
     return shred == b'%PDF-1.'
 
+
+####
+# J
+####
+
+####
+# K
+####
 
 ####
 # L
@@ -347,6 +370,10 @@ def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
 ####
 
 ####
+# O
+####
+
+####
 # P
 ####
 
@@ -373,12 +400,8 @@ def path_join(dir_part:str, file_part:str) -> str:
 ###
 
 ###
-# O
-###
-
-####
 # R
-####
+###
 
 def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple:
     """
@@ -433,5 +456,5 @@ def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> 
 ####
 
 ####
-# T
+# T U V W X Y Z
 ####

@@ -49,9 +49,56 @@ __status__ = 'Prototype'
 __license__ = 'MIT'
 
 ###
+# B
+###
+byte_scaling = {
+    'P':1024**5,
+    'T':1024**4,
+    'G':1024**3,
+    'M':1024**2,
+    'K':1024**1,
+    'B':1024**0,
+    'X':None
+    }
+
+
+def byte_scale(i:int, key:str='X') -> str:
+    """
+    i -- an integer to scale.
+    key -- a character to use for scaling.
+    """
+    try:
+        divisor = byte_scaling[key]
+    except:
+        return ""
+
+    try:
+        return f"{round(i/divisor, 3)}{key}"
+    except:
+        for k, v in byte_scaling.items():
+            if i > v: return f"{round(i/v, 3)}{k}"
+        else:
+            # How did this happen?
+            return f"Error: byte_scale({i}, {k})"
+
+
+def byte_size(s:str) -> int:
+    """
+    Takes a string like '20K' and changes it to 20*1024.
+    Note that it accepts '20k' or '20K'
+    """ 
+    if not s: return 0
+    try:
+        multiplier = byte_scaling[s[-1].upper]
+        the_rest = int(s[:-1])
+        return the_rest*multiplier
+    except:
+        return 0
+
+
+###
 # C
 ###
-
 
 def columns() -> int:
     """
@@ -152,15 +199,16 @@ def dorunrun(command:Union[str, list],
     return result.returncode if return_exit_code else (r == 0)
 
 
-def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False) -> str:
+def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False, split_it:bool=False) -> str:
     """
     Print the command line arguments as they would have been if the user
     had specified every possible one (including optionals and defaults).
     """
     if not return_it: print("")
     opt_string = ""
+    sep='\n' if split_it else ' '
     for _ in sorted(vars(args).items()):
-        opt_string += " --"+ _[0].replace("_","-") + " " + str(_[1])
+        opt_string += f"{sep}--"+ _[0].replace("_","-") + " " + str(_[1])
     if not return_it: print(opt_string + "\n")
     
     return opt_string if return_it else ""
