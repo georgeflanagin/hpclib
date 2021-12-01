@@ -122,12 +122,25 @@ class Fname:
         write new content.
         """
 
-        content = b""
-        if bool(self) and new_content is None:
-            with open(str(self), 'rb') as f:
+        content = ""
+        
+        # if the file does not exist, it is empty.
+        if not bool(self) and not new_content:
+            return content
+
+        # it does exist, and we are reading it.
+        elif bool(self) and not new_content:
+            with open(str(self), 'r') as f:
                 content = f.read()
-        else:
+
+        # it does not exist, and we are writing it.
+        elif not bool(self) and new_content:
             with open(str(self), 'wb+') as f:
+                f.write(new_content.encode('utf-8'))
+
+        # it exists, and we are appending.
+        else:
+            with open(str(self), 'ab') as f:
                 f.write(new_content.encode('utf-8'))
             
         return content if new_content is None else self

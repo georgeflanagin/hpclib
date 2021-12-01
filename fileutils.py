@@ -53,8 +53,19 @@ LOCK_NONE = 0
 ####
 # A
 ####
+def all_dirs_in(s:str, depth:int=0) -> str:
+    """
+    A generator to get the names of directories under the
+    one given as the first parameter.
+    """
+    s = expandall(s)
+    if depth==1: 
+        return next(os.walk(s))[1]
+    else:
+        return [t[0] for t in os.walk(s)]
 
-def all_files_in(s:str, skip_hidden=False) -> str:
+
+def all_files_in(s:str, skip_hidden:bool=False) -> str:
     """
     A generator to cough up the full file names for every
     file in a directory.
@@ -74,6 +85,17 @@ def all_files_like(s:str) -> str:
     s = expandall(s)
     return [ f for f in all_files_in(os.path.dirname(s)) 
         if fnmatch.fnmatch(os.path.basename(f), os.path.basename(s)) ]
+
+
+def all_module_files() -> str:
+    """
+    This generator locates all module files that are located in
+    the directories that are members of MODULEPATH.
+    """
+    for location in os.getenv('MODULEPATH', "").split(':'):
+        for f in all_files_of_type(location, 'mod'):
+            yield f
+
 
 ####
 # B

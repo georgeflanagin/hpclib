@@ -51,6 +51,15 @@ __license__ = 'MIT'
 ###
 # B
 ###
+byte_remap = {
+    'PB':'P',
+    'TB':'T',
+    'GB':'G',
+    'MB':'M',
+    'KB':'K'
+    }
+
+
 byte_scaling = {
     'P':1024**5,
     'T':1024**4,
@@ -88,8 +97,13 @@ def byte_size(s:str) -> int:
     Note that it accepts '20k' or '20K'
     """ 
     if not s: return 0
+
+    # Take care of the case where it is KB rather than K, etc.
+    if s[-2:] in byte_remap:
+        s = s[:-2] + byte_remap[s[-2:]]
+
     try:
-        multiplier = byte_scaling[s[-1].upper]
+        multiplier = byte_scaling[s[-1].upper()]
         the_rest = int(s[:-1])
         return the_rest*multiplier
     except:
@@ -262,6 +276,56 @@ def getusers_in_group(g:str) -> tuple:
         return tuple()
 
 
+def group_exists(g:str) -> bool:
+    try:
+        grp.getgrnam(g)
+        return True
+    except KeyError as e:
+        return False    
+
+####
+# H
+####
+
+def hms_to_hours(hms:str) -> float:
+    """
+    Convert a slurm time like 2-12:00:00 to
+    a number of hours.
+    """
+
+    try:
+        h, m, s = hms.split(':')
+    except Exception as e:
+        if hms == 'infinite': return 365*24
+        return 0
+
+    try:
+        d, h = h.split('-')
+    except Exception as e:
+        d = 0
+
+    return int(d)*24 + int(h) + int(m)/60 + int(s)/3600
+
+
+def hours_to_hms(h:float) -> str:
+    """
+    Convert a number of hours to "SLURM time."
+    """
+
+    days = int(h / 24)
+    h -= days * 24
+    hours = int(h)
+    h -= hours
+    minutes = int(h * 60)
+    h -= minutes/60
+    seconds = int(h*60)
+
+    return ( f"{hours:02}:{minutes:02}:{seconds:02}"
+        if h < 24 else
+        f"{days}-{hours:02}:{minutes:02}:{seconds:02}" )
+
+
+
 ####
 # I
 ####
@@ -285,6 +349,19 @@ def memavail() -> float:
     with open('/proc/meminfo') as m:
         info = [ _.split() for _ in m.read().split('\n') ]
     return float(info[2][1])/float(info[0][1])
+
+
+def mygroups() -> Tuple[str]:
+    """
+    Collect the group information for the current user, including
+    the self associated group, if any.
+    """
+    mynetid = getpass.getuser()
+
+    groups = [g.gr_name for g in grp.getgrall() if mynetid in g.gr_mem]
+    primary_group = pwd.getpwnam(mynetid).pw_gid
+    groups.append(grp.getgrgid(primary_group).gr_name)
+    return tuple(groups)
 
 
 def mymem() -> int:
@@ -356,6 +433,19 @@ def pids_of(process_name:str, anywhere:Any=None) -> list:
     """
     results = subprocess.run(['pgrep','-u', 'canoe'], stdout=subprocess.PIPE)
     return [ int(_) for _ in results.stdout.decode('utf-8').split('\n') if _ ]
+
+
+####
+# S
+####
+
+def script_driven() -> bool:
+    """
+    returns True if the input is piped or coming from an IO redirect.
+    """
+
+    mode = os.fstat(0).st_mode
+    return True if stat.S_ISFIFO(mode) or stat.S_ISREG(mode) else False
 
 
 def setproctitle(s:str) -> str:
