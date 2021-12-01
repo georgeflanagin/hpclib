@@ -220,4 +220,3 @@ class ExitCode(enum.IntEnum, metaclass=FakingIt):
 
     # Nonsense argument to exit()
     OUTOFRANGE = 255
-
