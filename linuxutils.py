@@ -791,6 +791,10 @@ def this_line(level: int=1, invert: bool=True) -> int:
     return i.lineno if not invert else (0 - i.lineno)
 
 
+def time_print(s:str) -> None:
+    sys.stderr.write(f"{now_as_string()} :: {s}\n")
+
+
 def time_match(t, set_of_times:list) -> bool:
     """
     Determines if the datetime object's parts are all in the corresponding

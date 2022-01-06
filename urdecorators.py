@@ -134,3 +134,4 @@ def show_exceptions_and_frames(func:object) -> None:
 
     return wrapper
 
+trap = show_exceptions_and_frames

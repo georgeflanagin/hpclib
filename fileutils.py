@@ -473,6 +473,21 @@ def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> 
     return t
 
 
+def read_whitespace_file(filename:str) -> tuple:
+    """
+    This is a generator that returns the whitespace delimited tokens 
+    in a text file, one token at a time.
+    """
+
+    if not os.path.isfile(filename):
+        sys.stderr.write(f"{filename} cannot be found.")
+        return os.EX_NOINPUT
+
+    f = open(filename)
+    for _ in (" ".join(f.read().split('\n'))).split():
+        yield _
+    
+
 ####
 # S
 ####
