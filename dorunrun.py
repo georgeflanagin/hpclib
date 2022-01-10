@@ -38,7 +38,7 @@ def dorunrun(command:Union[str, list],
     verbose:bool=False,
     quiet:bool=False,
     return_datatype:type=bool,
-    ) -> tuple:
+    ) -> Union[str, bool, int, dict]:
     """
     A wrapper around (almost) all the complexities of running child 
         processes.
@@ -48,27 +48,32 @@ def dorunrun(command:Union[str, list],
     verbose -- do we want some narrative to stderr?
     quiet -- overrides verbose, shell, etc. 
     return_datatype -- this argument corresponds to the item 
-        the caller wants returned.
+        the caller wants returned. It can be one of these values.
+
             bool : True if the subprocess exited with code 0.
             int  : the exit code itself.
             str  : the stdout of the child process.
+            dict : everything as a dict of key-value pairs.
 
     returns -- a tuple of values corresponding to the requested info.
     """
 
-    if verbose: sys.stderr.write(f"{command=}\n")
+    # If return_datatype is not in the list, use dict. Note 
+    # that the next statement covers None, as well.
+    return_datatype = dict if return_datatype not in (int, str, bool) else return_datatype
 
+    # Let's convert all the arguments to str and relieve the caller
+    # of that responsibility.
     if isinstance(command, (list, tuple)):
         command = [str(_) for _ in command]
         shell = False
-
     elif isinstance(command, str):
         shell = True
-
     else:
-        raise Exception(f"Bad argument type to dorunrun: {command}")
+        raise Exception(f"Bad argument type to dorunrun: {command=}")
 
-    r = None
+    if verbose: sys.stderr.write(f"{command=}\n")
+
     try:
         result = subprocess.run(command, 
             timeout=timeout, 
@@ -78,18 +83,23 @@ def dorunrun(command:Union[str, list],
             shell=shell)
 
         code = result.returncode
-        if return_datatype is bool:
-            return code == 0
-        elif return_datatype is int:
-            return code
+        b_code = code == 0
+        i_code = code
+        s = result.stdout
+        e = result.stderr
+
+        if return_datatype is int:
+            return i_code
         elif return_datatype is str:
-            return result.stdout
-        elif return_datatype is tuple:
-            return code, result.stdout, result.stderr
-        elif return_datatype is dict:
-            return {"code":code, "stdout":result.stdout, "stderr":result.stderr}
+            return s
+        elif return_datatype is bool:
+            return b_code
         else:
-            raise Exception(f"Unknown: {return_datatype=}")
+            return {"OK":b_code, 
+                    "code":i_code, 
+                    "name":ExitCode(i_code).name, 
+                    "stdout":s, 
+                    "stderr":e}
         
     except subprocess.TimeoutExpired as e:
         raise Exception(f"Process exceeded time limit at {e.timeout} seconds.")    
