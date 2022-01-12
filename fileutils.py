@@ -502,6 +502,8 @@ def read_whitespace_file(filename:str) -> tuple:
     This is a generator that returns the whitespace delimited tokens 
     in a text file, one token at a time.
     """
+    if not filename: return []
+
     if not os.path.isfile(filename):
         sys.stderr.write(f"{filename} cannot be found.")
         return os.EX_NOINPUT
