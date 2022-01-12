@@ -9,6 +9,7 @@ import base64
 import calendar
 from   ctypes import cdll, byref, create_string_buffer
 import fnmatch
+import getpass
 import glob
 import os
 import random
@@ -83,8 +84,8 @@ def all_files_like(s:str) -> str:
     A list of all files that match the argument
     """
     s = expandall(s)
-    return [ f for f in all_files_in(os.path.dirname(s)) 
-        if fnmatch.fnmatch(os.path.basename(f), os.path.basename(s)) ]
+    yield from ( f for f in all_files_in(os.path.dirname(s)) 
+        if fnmatch.fnmatch(os.path.basename(f), os.path.basename(s)) )
 
 
 def all_module_files() -> str:
@@ -293,6 +294,29 @@ def got_data(filenames:str) -> bool:
 ####
 # H
 ####
+def home_and_away(filename:str) -> str:
+    """
+    Looks for the file in $PWD, $OLDPWD, $HOME, and then /scratch if it is
+    not fully qualified. Note that this function only returns None if no
+    files like filename are found in any of the locations.
+
+    It has the benefit that unless nothing is found, it returns the
+    filename fully qualified. 
+    """
+
+    if filename.startswith(os.sep): return filename
+
+    s = os.path.join(os.environ.get('PWD',''), filename)
+    if os.path.exists(s): return s
+    s = os.path.join(os.environ.get('OLDPWD',''), filename)
+    if os.path.exists(s): return s
+    s = os.path.join(os.environ.get('HOME', ''), filename)
+    if os.path.exists(s): return s
+    s = os.path.join(os.environ.get(f'/scratch/{getpass.getuser()}', filename))
+    if os.path.exists(s): return s
+
+    return None
+
 
 ####
 # I
@@ -478,14 +502,12 @@ def read_whitespace_file(filename:str) -> tuple:
     This is a generator that returns the whitespace delimited tokens 
     in a text file, one token at a time.
     """
-
     if not os.path.isfile(filename):
         sys.stderr.write(f"{filename} cannot be found.")
         return os.EX_NOINPUT
 
     f = open(filename)
-    for _ in (" ".join(f.read().split('\n'))).split():
-        yield _
+    yield from (" ".join(f.read().split('\n'))).split()
     
 
 ####

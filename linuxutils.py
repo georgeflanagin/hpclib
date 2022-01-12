@@ -248,6 +248,13 @@ def explain(code:int) -> str:
 ####
 # G
 ####
+def getallgroups():
+    """
+    We only care about the ones over 2000.
+    """
+    yield from ( _.gr_name for _ in grp.getgrall() if _.gr_gid > 2000 )
+
+
 def getgroups(u:str) -> tuple:
     """
     Return a tuple of all the groups that "u" belongs to.
@@ -356,12 +363,7 @@ def mygroups() -> Tuple[str]:
     Collect the group information for the current user, including
     the self associated group, if any.
     """
-    mynetid = getpass.getuser()
-
-    groups = [g.gr_name for g in grp.getgrall() if mynetid in g.gr_mem]
-    primary_group = pwd.getpwnam(mynetid).pw_gid
-    groups.append(grp.getgrgid(primary_group).gr_name)
-    return tuple(groups)
+    return getgroups(getpass.getuser())
 
 
 def mymem() -> int:
