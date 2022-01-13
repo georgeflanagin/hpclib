@@ -949,6 +949,21 @@ def wall(s: str):
     """ Send out a notification on the system. """
     return subprocess.call(['wall "' + s + '"'])
 
+
+def whereami() -> str:
+    """
+    Primarily to determine if the program is running on the cluster
+    or the webserver, but this function can also return other info.
+    """
+    hostname = socket.gethostname()
+    if hostname == 'spdrweb.richmond.edu': return 'webserver'
+    if hostname == 'spydur.cluster': return 'headnode'
+    if '.cluster' in hostname: return 'computenode'
+    if '.richmond.edu' in hostname: return 'oncampus'
+    return 'offcampus'
+    
+
+
 def whoami() -> None:
     """
     Prints the thread id, and the PID of the console you are currently running.
