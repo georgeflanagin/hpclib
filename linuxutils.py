@@ -13,6 +13,7 @@ from   collections.abc import Iterable
 import copy
 from   ctypes import cdll, byref, create_string_buffer
 import datetime
+import enum
 import grp
 import inspect
 import os
@@ -153,8 +154,8 @@ def dorunrun(command:Union[str, list],
     timeout:int=None,
     verbose:bool=False,
     quiet:bool=False,
-    return_exit_code:bool=False,
-    ) -> Union[bool, int]:
+    return_datatype:type=bool,
+    ) -> Union[str, bool, int, dict]:
     """
     A wrapper around (almost) all the complexities of running child 
         processes.
@@ -163,54 +164,65 @@ def dorunrun(command:Union[str, list],
     timeout -- generally, we don't
     verbose -- do we want some narrative to stderr?
     quiet -- overrides verbose, shell, etc. 
-    return_exit_code -- return the actual exit code rather than
-        implicitly converting to boolean True for 0.
+    return_datatype -- this argument corresponds to the item 
+        the caller wants returned. It can be one of these values.
 
-    returns -- True if the child process returns a zero, or the code.
+            bool : True if the subprocess exited with code 0.
+            int  : the exit code itself.
+            str  : the stdout of the child process.
+            dict : everything as a dict of key-value pairs.
+
+    returns -- a tuple of values corresponding to the requested info.
     """
 
-    if verbose: tombstone(f"{command=}")
+    # If return_datatype is not in the list, use dict. Note 
+    # that the next statement covers None, as well.
+    return_datatype = dict if return_datatype not in (int, str, bool) else return_datatype
 
+    # Let's convert all the arguments to str and relieve the caller
+    # of that responsibility.
     if isinstance(command, (list, tuple)):
         command = [str(_) for _ in command]
         shell = False
-
     elif isinstance(command, str):
         shell = True
-
     else:
-        raise Exception(f"Bad argument type to dorunrun: {command}")
+        raise Exception(f"Bad argument type to dorunrun: {command=}")
 
-    r = None
+    if verbose: sys.stderr.write(f"{command=}\n")
+
     try:
         result = subprocess.run(command, 
             timeout=timeout, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE, 
+            text=True,
             shell=shell)
 
-        r = result.returncode
+        code = result.returncode
+        b_code = code == 0
+        i_code = code
+        s = result.stdout
+        e = result.stderr
 
-        # Always show errors even if verbose is False.
-        if not r:
-            verbose and tombstone("Child process terminated without error.")
-        elif r < 0:
-            tombstone(f"Child process terminated by signal {-r}")
+        if return_datatype is int:
+            return i_code
+        elif return_datatype is str:
+            return s
+        elif return_datatype is bool:
+            return b_code
         else:
-            verbose and tombstone(f"Child process returned an error: {r}")
-
-        if not quiet:
-            if r or shell or verbose:
-                tombstone(f"stdout: {result.stdout}")
-                tombstone(f"stderr: {result.stderr}")
-
+            return {"OK":b_code, 
+                    "code":i_code, 
+                    "name":ExitCode(i_code).name, 
+                    "stdout":s, 
+                    "stderr":e}
+        
     except subprocess.TimeoutExpired as e:
-        tombstone(f"Process exceeded time limit at {e.timeout} seconds.")    
+        raise Exception(f"Process exceeded time limit at {e.timeout} seconds.")    
 
     except Exception as e:
-        tombstone(f"Unexpected error: {str(e)}")
-    
-    return result.returncode if return_exit_code else (r == 0)
+        raise Exception(f"Unexpected error: {str(e)}")
 
 
 def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False, split_it:bool=False) -> str:
@@ -231,6 +243,130 @@ def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False, split_it:bo
 ####
 # E
 ####
+
+class FakingIt(enum.EnumMeta):
+
+    def __contains__(self, something:object) -> bool:
+        """
+        Normally ... the "in" operator checks if something is in
+        an instance of the container. We want to check if a value
+        is one of the IntEnum class's members.
+        """
+        try:
+            self(something)
+        except ValueError:
+            return False
+
+        return True
+
+
+class ExitCode(enum.IntEnum, metaclass=FakingIt):
+    """
+    This is a comprehensive list of exit codes in Linux, and it 
+    includes four utility functions. Suppose x is an integer:
+
+        x in ExitCode     # is x a valid value?
+        x.OK              # Workaround: enums all evaluate to True, even if they are zero.
+        x.is_signal       # True if the value is a "killed by Linux signal"
+        x.signal          # Which signal, or zero.
+    """
+
+    @property
+    def OK(self) -> bool:
+        return self is ExitCode.SUCCESS
+
+    @property
+    def is_signal(self) -> bool:
+        return ExitCode.KILLEDBYMAX > self > ExitCode.KILLEDBYSIGNAL
+
+    @property 
+    def signal(self) -> int:
+        return self % ExitCode.KILLEDBYSIGNAL if self.is_signal else 0
+
+
+    # All was well.
+    SUCCESS = os.EX_OK
+
+    # It just did not work. No info provided.
+    GENERAL = 1
+
+    # BASH builtin error (e.g. basename)
+    BUILTIN = 2
+    
+    # No device or address by that name was found.
+    NODEVICE = 6
+
+    # Trying to create a user or group that already exists.
+    USERORGROUPEXISTS = 9
+
+    # The execution requires sudo
+    NOSUDO = 10
+
+    ######
+    # Code 64 is also the usage error, and the least number
+    # that has reserved meanings, and nothing above here 
+    # should be used by a user program.
+    ######
+    BASEVALUE = 64
+    # command line usage error
+    USAGE = os.EX_USAGE
+    # data format error
+    DATAERR = os.EX_DATAERR
+    # cannot open input
+    NOINPUT = os.EX_NOINPUT
+    # user name unknown
+    NOUSER = os.EX_NOUSER
+    # host name unknown
+    NOHOST = os.EX_NOHOST
+    # unavailable service or device
+    UNAVAILABLE = os.EX_UNAVAILABLE
+    # internal software error
+    SOFTWARE = os.EX_SOFTWARE
+    # system error
+    OSERR = os.EX_OSERR
+    # Cannot create an ordinary user file
+    OSFILE = os.EX_OSFILE
+    # Cannot create a critical file, or it is missing.
+    CANTCREAT = os.EX_CANTCREAT
+    # input/output error
+    IOERR = os.EX_IOERR
+    # retry-able error
+    TEMPFAIL = os.EX_TEMPFAIL
+    # remotely reported error in protocol
+    PROTOCOL = os.EX_PROTOCOL
+    # permission denied
+    NOPERM = os.EX_NOPERM
+    # configuration file error
+    CONFIG = os.EX_CONFIG
+
+    # The operation was run with a timeout, and it timed out.
+    TIMEOUT = 124
+
+    # The request to run with a timeout failed.
+    TIMEOUTFAILED = 125
+
+    # Tried to execute a non-executable file.
+    NOTEXECUTABLE = 126
+
+    # Command not found (in $PATH)
+    NOSUCHCOMMAND = 127
+
+    ###########
+    # If $? > 128, then the process was killed by a signal.
+    ###########
+    KILLEDBYSIGNAL = 128
+
+    # These are common enough to include in the list.
+    KILLEDBYCTRLC = 130
+    KILLEDBYKILL = 137
+    KILLEDBYPIPE = 141
+    KILLEDBYTERM = 143
+
+    KILLEDBYMAX = 161
+
+    # Nonsense argument to exit()
+    OUTOFRANGE = 255
+
 
 def explain(code:int) -> str:
     """
