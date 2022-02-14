@@ -66,7 +66,7 @@ def all_dirs_in(s:str, depth:int=0) -> str:
         return [t[0] for t in os.walk(s)]
 
 
-def all_files_in(s:str, skip_hidden:bool=False) -> str:
+def all_files_in(s:str, include_hidden:bool=False) -> str:
     """
     A generator to cough up the full file names for every
     file in a directory.
@@ -75,7 +75,7 @@ def all_files_in(s:str, skip_hidden:bool=False) -> str:
     for c, d, files in os.walk(s):
         for f in files:
             s = os.path.join(c, f)
-            if skip_hidden and is_hidden(s): continue
+            if not include_hidden and is_hidden(s): continue
             yield s
 
 
@@ -94,8 +94,7 @@ def all_module_files() -> str:
     the directories that are members of MODULEPATH.
     """
     for location in os.getenv('MODULEPATH', "").split(':'):
-        for f in all_files_of_type(location, 'mod'):
-            yield f
+        yield from all_files_in(location)
 
 
 ####
