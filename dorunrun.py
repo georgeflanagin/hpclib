@@ -20,7 +20,10 @@ if sys.version_info < min_py:
     sys.exit(os.EX_SOFTWARE)
 
 import math
+import shlex
 import subprocess
+
+from   urdecorators import trap
 
 # Credits
 __author__ = 'George Flanagin'
@@ -32,7 +35,7 @@ __email__ = ['me+ur@georgeflanagin.com', 'gflanagin@richmond.edu']
 __status__ = 'Teaching example'
 __license__ = 'MIT'
 
-
+@trap
 def dorunrun(command:Union[str, list],
     timeout:int=None,
     verbose:bool=False,
@@ -68,7 +71,8 @@ def dorunrun(command:Union[str, list],
         command = [str(_) for _ in command]
         shell = False
     elif isinstance(command, str):
-        shell = True
+        command = shlex.split(command)
+        shell = False
     else:
         raise Exception(f"Bad argument type to dorunrun: {command=}")
 
@@ -80,13 +84,13 @@ def dorunrun(command:Union[str, list],
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE, 
             text=True,
-            shell=shell)
+            shell=False)
 
         code = result.returncode
         b_code = code == 0
         i_code = code
-        s = result.stdout
-        e = result.stderr
+        s = result.stdout[:-1] if result.stdout.endswith('\n') else result.stdout
+        e = result.stderr[:-1] if result.stderr.endswith('\n') else result.stderr
 
         if return_datatype is int:
             return i_code
@@ -102,7 +106,7 @@ def dorunrun(command:Union[str, list],
                     "stderr":e}
         
     except subprocess.TimeoutExpired as e:
-        raise Exception(f"Process exceeded time limit at {e.timeout} seconds.")    
+        raise Exception(f"Process exceeded time limit at {timeout} seconds.")    
 
     except Exception as e:
         raise Exception(f"Unexpected error: {str(e)}")
