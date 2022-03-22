@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-""" Bare functions that support network operations. """
-
-import typing
-from   typing import *
 
 LIGHT_BLUE="\033[1;34m"
 BLUE = '\033[94m'
