@@ -713,6 +713,36 @@ def snooze(n:int) -> int:
     return nap
 
 
+def splitter(group:Iterable, num_chunks:int) -> Iterable:
+    """
+    Generator to divide a collection into num_chunks pieces.
+    It works with str, tuple, list, and dict, and the return
+    value is of the same type as the first argument.
+
+    group      -- str, tuple, list, or dict.
+    num_chunks -- how many pieces you want to have.
+
+    Use:
+        for chunk in splitter(group, num_chunks):
+            ... do something with chunk ...
+
+    """
+
+    quotient, remainder = divmod(len(group), num_chunks)
+    is_dict = isinstance(group, dict)
+    if is_dict: 
+        group = tuple(kvpair for kvpair in group.items())
+
+    for i in range(num_chunks):
+        lower = i*quotient + min(i, remainder)
+        upper = (i+1)*quotient + min(i+1, remainder)
+
+        if is_dict:
+            yield {k:v for (k,v) in group[lower:upper]}
+        else:
+            yield group[lower:upper]
+
+
 def squeal(s: str=None, rectus: bool=True, source=None) -> str:
     """ The safety pig will appear when there is trouble. """
     tombstone(str)
