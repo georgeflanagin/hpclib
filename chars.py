@@ -46,4 +46,6 @@ class Char(enum.Enum):
     UNDERSCORE  = '_'
     OCTOTHORPE  = '#'
     EMPTY_STR   = ""
+    EQUAL = '='
+    DASH = '-'
 
