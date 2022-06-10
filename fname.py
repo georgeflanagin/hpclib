@@ -363,7 +363,10 @@ class Fname:
         return self._fqn
 
 
+    @property
     def edge_hash(self) -> str:
+        if self._edge_hash: 
+            return self._edge_hash
         hasher = hashlib.sha1()
         with open(str(self), 'rb') as f:
             hasher.update(f.read(4096))
@@ -413,7 +416,7 @@ class Fname:
             self._lock_handle = os.open(str(self), os.O_RDONLY)
             fcntl.flock(self._lock_handle, mode)
         except Exception as e:
-            print(str(e))
+            print(f"{e}")
             return False
         else:
             return True
