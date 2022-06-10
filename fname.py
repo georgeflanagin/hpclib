@@ -60,20 +60,24 @@ class Fname:
 
     BUFSIZE = 65536 
     __slots__ = { 
-        '_me' : 'The name as it appears in the constructor', 
-        '_is_URI' : 'True or False based on containing a "scheme"', 
-        '_fqn' : 'Fully resolved name', 
-        '_dir' : 'Just the directory part of the name', 
-        '_fname' : 'Just the file and the extension',
-        '_fname_only' : 'No directory and no extension', 
-        '_ext' : 'Just the extension (if there is one)', 
-        '_all_but_ext' : 'The whole thing, minus any extension', 
-        '_len' : 'save the length',
-        '_content_hash' : 'hexdigit string representing the hash of the contents at last reading',
-        '_lock_handle' : 'an entry in the logical unit table.'
+        '_me' : 'The name as it appears in the constructor',   # 0
+        '_is_URI' : 'True or False based on containing a "scheme"',  # 1 
+        '_fqn' : 'Fully resolved name', # 2 
+        '_dir' : 'Just the directory part of the name', # 3
+        '_fname' : 'Just the file and the extension', # 4
+        '_fname_only' : 'No directory and no extension', # 5
+        '_ext' : 'Just the extension (if there is one)', # 6
+        '_all_but_ext' : 'The whole thing, minus any extension', # 7 
+        '_len' : 'save the length', # 8 
+        '_inode' : 'the inode identifier', # 9
+        '_nlink' : 'number of links to the inode', # 10
+        '_content_hash' : 'hexdigit string representing the hash of the contents at last reading', # 11
+        '_edge_hash' : 'hash of the first and last disc page of the file.', # 12 
+        '_lock_handle' : 'an entry in the logical unit table.' # 13
         }
 
-    __values__ = ( None, False, '', '', '', '', '', -1, '', None )
+    __values__ = ( None, False, '', '', '', '', '', '', -1, 0, None, '', '', None )
+    #               0      1    2   3   4   5   6   7   8   9    10  11  12   13
 
     __defaults__ = dict(zip(__slots__.keys(), __values__))
 
@@ -86,9 +90,11 @@ class Fname:
         Raises a ValueError if the argument is empty.
         """
 
+        
         if not s or not isinstance(s, str): 
             raise ValueError('Cannot create empty Fname object.')
 
+        self._me = s
         for k,v in Fname.__defaults__.items():
             setattr(self, k, v)
 
@@ -102,6 +108,13 @@ class Fname:
         self._dir, self._fname = os.path.split(self._fqn)
         self._fname_only, self._ext = os.path.splitext(self._fname)
         self._all_but_ext = self._dir + os.path.sep + self._fname_only
+        try:
+            result = os.stat(self._fqn)
+            self._inode = result.st_ino
+            self._len = result.st_size
+            self._nlink = result.st_nlink
+        except Exception as e:
+            pass
 
 
     def __bool__(self) -> bool:
@@ -112,7 +125,6 @@ class Fname:
         would return False, open the file for write, test again, and "if"
         will then return True.
         """
-
         return os.path.isfile(self._fqn)
 
 
@@ -153,7 +165,9 @@ class Fname:
         """
         if not self: return 0
         if self._len < 0: 
-            self._len = os.stat(str(self)).st_size
+            result = os.stat(str(self))
+            self._len = result.st_size
+            self._inode = result.st_ino
         return self._len
 
 
@@ -209,6 +223,10 @@ class Fname:
         if not self or not other: return False
         if len(self) != len(other): return False
 
+        if not self._edge_hash: self.edge_hash()
+        if not other._edge_hash: other.edge_hash()
+        if self._edge_hash != other._edge_hash: return False
+
         # Gotta look at the contents. See if our hash is known.
         if not self._content_hash: self()
             
@@ -247,38 +265,35 @@ class Fname:
 
         # 3: are we allowed to open the file?
         if not os.access(str(self), os.R_OK): 
-            print('No access to {}.'.format(str(self)))
+            print(f'No access to {self}.')
             return None
 
         # 4: OK, we are allowed access, but can we open it? 
         try:
             fd = os.open(str(self), os.O_RDONLY)
         except Exception as e:
-            print('Cannot open {}, so it is busy.'.format(str(self)))
+            print(f'Cannot open {self}, so it is busy.')
             return True
 
         # 5: Can we lock it?
         try:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            print(f'{self} is locked.')
+            return False
 
         except BlockingIOError as e:
-            print('No lock available on {}, so it is busy'.format(str(self)))
-            rval = True
+            print(f'No lock available on {self}, so it is busy')
+            return True
 
         except Exception as e:
             print(str(e))
-            rval = None
-
-        else:
-            print('{} is locked.'.format(str(self)))
-            rval = False
+            return None
 
         finally:
             try:
                 os.close(fd)
             except:
                 pass
-            return rval
 
 
     @property
@@ -348,6 +363,17 @@ class Fname:
         return self._fqn
 
 
+    def edge_hash(self) -> str:
+        hasher = hashlib.sha1()
+        with open(str(self), 'rb') as f:
+            hasher.update(f.read(4096))
+            f.seek(-4096, os.SEEK_END)
+            hasher.update(f.read())
+
+        self._edge_hash = hasher.hexdigest()
+        return self._edge_hash
+
+
     @property
     def hash(self) -> str:
         """
@@ -408,22 +434,24 @@ class Fname:
             this is a diagnostic function only. Probably not used
             in production. 
         """
-        print("if test returns       " + str(int(self.__bool__())))
-        print("str() returns         " + str(self))
-        print("fqn() returns         " + self.fqn)
-        print("fname() returns       " + self.fname)
-        print("fname_only() returns  " + self.fname_only)
-        print("directory() returns   " + self.directory)
-        print("ext() returns         " + self.ext)
-        print("all_but_ext() returns " + self.all_but_ext)
-        print("len() returns         " + str(len(self)))
+        print(f"if test returns {self.__bool__()}")
+        print(f"{str(self)=}")
+        print(f"{self.fqn=}")
+        print(f"{self.fname=}")
+        print(f"{self.fname_only=}")
+        print(f"{self.directory=}")
+        print(f"{self.ext=}")
+        print(f"{self.all_but_ext=}")
+        print(f"{len(self)=}")
         s = self()
         try:
-            print("() returns            \n" + s[0:30] + ' .... ' + s[-30:])
+            print(f"() returns >>>{s[0:30]} .... \n{s[-30:]}<<<\n")
         except TypeError as e:
             print("() doesn't make sense on a binary file.")
-        print("hash() returns        " + self.hash)
-        print("locked() returns      " + str(self.locked))
+        print(f"{self._inode=}")
+        print(f"{self.hash=}")
+        print(f"{self.edge_hash()=}")
+        print(f"{self.locked=}")
 
 
     def unlock(self) -> bool:
