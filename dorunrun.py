@@ -58,7 +58,7 @@ def dorunrun(command:Union[str, list],
             str  : the stdout of the child process.
             dict : everything as a dict of key-value pairs.
 
-    returns -- a tuple of values corresponding to the requested info.
+    returns -- a value corresponding to the requested info.
     """
 
     # If return_datatype is not in the list, use dict. Note 

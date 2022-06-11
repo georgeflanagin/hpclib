@@ -19,7 +19,6 @@ import inspect
 import os
 import platform
 import pprint as pp
-import psutil
 import pwd
 import re
 import signal
@@ -517,11 +516,6 @@ def mygroups() -> Tuple[str]:
     """
     return getgroups(getpass.getuser())
 
-
-def mymem() -> int:
-    info = psutil.Process(os.getpid())
-    with info.oneshot():
-        return info.memory_full_info().uss
 
 ####
 # N
