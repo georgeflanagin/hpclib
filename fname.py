@@ -22,6 +22,7 @@ This class supports all the comparison operators ( ==, !=, <, <=,
 import fcntl
 from   functools import total_ordering
 import hashlib
+import io
 import os
 import typing
 from   typing import *
@@ -58,7 +59,7 @@ class Fname:
     qualified name.
     """
 
-    BUFSIZE = 65536 
+    BUFSIZE = io.DEFAULT_BUFFER_SIZE
     __slots__ = { 
         '_me' : 'The name as it appears in the constructor',   # 0
         '_is_URI' : 'True or False based on containing a "scheme"',  # 1 
@@ -368,10 +369,11 @@ class Fname:
         if self._edge_hash: 
             return self._edge_hash
         hasher = hashlib.sha1()
-        with open(str(self), 'rb') as f:
-            hasher.update(f.read(4096))
-            f.seek(-4096, os.SEEK_END)
-            hasher.update(f.read())
+        try:
+            with open(str(self), 'rb') as f:
+                hasher.update(f.read(io.DEFAULT_BUFFER_SIZE))
+        except Exception as e:
+            return '00000000000000'
 
         self._edge_hash = hasher.hexdigest()
         return self._edge_hash
@@ -388,13 +390,17 @@ class Fname:
 
         hasher = hashlib.sha1()
 
-        with open(str(self), 'rb') as f:
-            while True:
-                segment = f.read(Fname.BUFSIZE)
-                if not segment: break
-                hasher.update(segment)
-        
-        self._content_hash = hasher.hexdigest()
+        try:
+            with open(str(self), 'rb') as f:
+                while True:
+                    segment = f.read(Fname.BUFSIZE)
+                    if not segment: break
+                    hasher.update(segment)
+        except:
+            self._content_hash = '0000000000000000'
+        else:
+            self._content_hash = hasher.hexdigest()
+
         return self._content_hash
 
 
