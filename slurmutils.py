@@ -98,11 +98,19 @@ def hours_to_hms(h:float) -> str:
         f"{days}-{hours:02}:{minutes:02}:{seconds:02}" )
 
 
-def parse_sinfo(params:SloppyTree) -> SloppyTree:
+def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     """
     Query the current environment to get the description of the
     cluster. Return it as a SloppyTree.
     """
+    if params is None:
+        params = SloppyTree()
+        params.querytool.opts = '-o "%50P %10c  %10m  %25f  %10G %l"'
+        params.querytool.exe = dorunrun("which sinfo", return_datatype=str).strip()
+        if not params.querytool.exe:
+            sys.stderr.write('SLURM does not appear to be on this machine.')
+            sys.exit(os.EX_SOFTWARE)
+        
 
     # These options give us information about cpus, memory, and
     # gpus on the partitions. The first line of the output
