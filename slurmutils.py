@@ -19,17 +19,7 @@ if sys.version_info < min_py:
 ###
 # Other standard distro imports
 ###
-import argparse
-import dateparser
 import datetime
-import fnmatch
-import getpass
-import grp
-import math
-import pwd
-import socket
-import stat
-import subprocess
 
 ###
 # From hpclib
@@ -38,6 +28,15 @@ from   dorunrun import dorunrun
 from   fname import Fname
 import linuxutils
 from   sloppytree import SloppyTree
+
+###
+# Objects
+###
+
+queries = SloppyTree()
+
+queries.by_job = lambda x : f"sudo -u slurm scontrol show job {x}"
+queries.all_job_ids = lambda : "sudo -u slurm squeue --format=%A"
 
 ###
 # Credits
@@ -156,3 +155,63 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     return tree
 
 
+def stat(jobid:Union[int,str]) -> SloppyTree:
+    """
+    Just like stat on files, this function will return all
+    the info about a SLURM job. 
+    """
+    tree = SloppyTree()
+    for i, element in enumerate(
+        dorunrun(queries.by_job(jobid),
+                return_datatype=str).split()
+                ):
+        try:
+            k, v = element.split('=')
+            tree[k.strip().lower()] = v.strip()
+        except:
+            tree[f'unknown{i}'] = element
+        
+    # Unfortunately, the data values are all of type str, which
+    # is rather limiting.
+    for k, v in tree.items():
+        if v in ( 'N/A', '(null)', '' ):
+            tree[k] = None
+            continue
+
+        if k in ( 'userid', 'groupid' ):
+            try:
+                v = v.replace('(',' ').replace(')',' ').strip().split()
+                tree[k] = SloppyTree({'name': v[0], 'id': v[1]})
+                continue
+            except:
+                pass
+
+        try:
+            tree[k] = int(v); continue
+        except:
+            pass
+
+        try:
+            tree[k] = datetime.datetime.fromisoformat(v); continue
+        except:
+            pass
+
+        try:
+            x = linuxutils.byte_size(v)
+            tree[k] = x if x else v
+            continue
+        except:
+            pass
+
+
+    return tree
+
+
+def stat_all() -> Dict[int, SloppyTree]:
+    
+    jobs = queries.all_job_ids
+
+    return { _: stat(_) 
+        for _ in dorunrun(queries.all_job_ids(), 
+            return_datatype=str).split('\n')[1:] }           
+    

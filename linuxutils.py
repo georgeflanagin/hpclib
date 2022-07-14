@@ -1081,6 +1081,10 @@ def urdate(dt:datetime.datetime = None) -> int:
     return (dt - UR_ZERO_DAY).days
     
 
+def user_from_uid(uid:int) -> str:
+    return dorunrun("id -nu {uid}", return_datatype=str)
+
+
 ####
 # V
 ####

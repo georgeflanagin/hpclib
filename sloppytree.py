@@ -129,7 +129,8 @@ class SloppyTree(dict):
                 yield v, 0 if with_indicator else v
 
 
-    def __str__(self) -> str:
+    @property
+    def printable(self) -> str:
         """
         Printing one of these things requires a bit of finesse.
         """
