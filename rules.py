@@ -50,7 +50,6 @@ params = SloppyTree()
 # being used. There is no obvious way to find the installed software.
 ###
 params.locations.programs = tuple( os.getenv('PATH').split(':') )
-params.modulefiles = tuple(slurmutils.all_module_files())
 params.programs = {
     'amber':'',
     'bbmap':'',

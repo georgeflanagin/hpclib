@@ -37,8 +37,7 @@ import paramiko
 from   paramiko import SSHClient, SSHConfig, SSHException
 
 # University of Richmond libraries
-import tombstone as tomb
-import urutils as uu
+import linuxutils as uu
 from   urdecorators import show_exceptions_and_frames as trap
 
 import pdb

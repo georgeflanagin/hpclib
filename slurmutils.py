@@ -158,7 +158,8 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
 def stat(jobid:Union[int,str]) -> SloppyTree:
     """
     Just like stat on files, this function will return all
-    the info about a SLURM job. 
+    the info about a SLURM job. To the extent practical, it 
+    transforms the character data into Python types.
     """
     tree = SloppyTree()
     for i, element in enumerate(
