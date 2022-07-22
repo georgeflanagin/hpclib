@@ -7,7 +7,6 @@ from typing import *
 
 import argparse
 import atexit
-import calendar
 import collections
 from   collections.abc import Iterable
 import copy
@@ -18,7 +17,6 @@ import grp
 import inspect
 import os
 import platform
-import pprint as pp
 import pwd
 import re
 import signal
@@ -32,7 +30,6 @@ import traceback
 try:
     libc = cdll.LoadLibrary('libc.so.6')
 except OSError as e:
-    print("libc.so.6 has not been loaded.")
     libc = None
     
 # Credits
@@ -151,18 +148,6 @@ def cpucounter() -> int:
         'Windows' : lambda : os.cpu_count()
         }
     return names[platform.platform().split('-')[0]]()
-
-
-def do_not_run_twice(name:str) -> None:
-    """
-    Prevents multiple executions at startup. Note that you shouldn't
-    call this function from a program after it may have forked into
-    multiple processes.
-    """
-    pids = pids_of(name, True)
-    if len(pids):
-        tombstone(name + " appears to be already running, and has these PIDs: " + str(pids))
-        sys.exit(os.EX_OSERR)
 
 
 def dorunrun(command:Union[str, list],
@@ -1064,22 +1049,6 @@ def unwhite(s: str) -> str:
             t.append(c)
     return ''.join(t)
 
-
-UR_ZERO_DAY = datetime.datetime(1830, 8, 1)
-def urdate(dt:datetime.datetime = None) -> int:
-    """
-    This is something of a pharse. Instead of calculating days from 
-    1 Jan 4713 BCE, I decided to create a truly UR calendar starting
-    from 1 August 1830 CE. After all, no dates before then could be 
-    of any importance to us. 
-
-    Why August? August 1 1830 was a Sunday, so we don't have to do
-    anything fancy to get day of the week. For any urdate, urdate%7 
-    is the weekday where Sunday is a zero.
-    """
-    if dt is None: dt = datetime.datetime.today()
-    return (dt - UR_ZERO_DAY).days
-    
 
 def user_from_uid(uid:int) -> str:
     return dorunrun("id -nu {uid}", return_datatype=str)
