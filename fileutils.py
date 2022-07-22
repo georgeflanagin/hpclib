@@ -7,7 +7,6 @@ from typing import *
 
 import base64
 import calendar
-from   ctypes import cdll, byref, create_string_buffer
 import fnmatch
 import getpass
 import glob
@@ -19,14 +18,6 @@ import stat
 import subprocess
 import sys
 import tempfile
-import threading
-import time
-import traceback
-try:
-    libc = cdll.LoadLibrary('libc.so.6')
-except OSError as e:
-    print("libc.so.6 has not been loaded.")
-    libc = None
     
 # Credits
 __longname__ = "University of Richmond"
