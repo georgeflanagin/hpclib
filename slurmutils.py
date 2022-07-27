@@ -27,6 +27,7 @@ import datetime
 from   dorunrun import dorunrun
 from   fname import Fname
 import linuxutils
+import setutils
 from   sloppytree import SloppyTree
 
 ###
@@ -104,7 +105,7 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     """
     if params is None:
         params = SloppyTree()
-        params.querytool.opts = '-o "%50P %10c  %10m  %25f  %10G %l"'
+        params.querytool.opts = '-o "%50P %10c  %10m  %25f  %20G %l"'
         params.querytool.exe = dorunrun("which sinfo", return_datatype=str).strip()
         if not params.querytool.exe:
             sys.stderr.write('SLURM does not appear to be on this machine.')
@@ -143,6 +144,8 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     xtras = dict(zip(partitions, xtras))
     gpus = dict(zip(partitions, gpus))
     times = dict(zip(partitions, times))
+    users = dict(zip(partitions, ( setutils.Universal() for _ in partitions ) ))
+
 
     for k, v in cores.items(): tree[k].cores = int(v)
     for k, v in memories.items():
@@ -151,6 +154,7 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     for k, v in xtras.items(): tree[k].xtras = v if 'null' not in v.lower() else None
     for k, v in gpus.items(): tree[k].gpus = v if 'null' not in v.lower() else None
     for k, v in times.items(): tree[k].max_hours = 24*365 if v == 'infinite' else hms_to_hours(v)
+    for k, v in users.items(): tree[k].users = v
 
     return tree
 

@@ -1,193 +1,95 @@
-beacon.py:38:    def __init__(self):
-beacon.py:53:    def __call__(self) -> Union[bool, str]:
-beacon.py:74:    def __str__(self) -> str:
-beacon.py:86:    def msg(self) -> dict:
-devnull.py:36:    def __init__(self, name:str = None):
-devnull.py:41:    def __enter__(self):
-devnull.py:45:    def __exit__(self):
-devnull.py:49:    def __bool__(self) -> bool:
-devnull.py:53:    def __len__(self) -> int:
-devnull.py:65:    def close(self) -> bool:
-devnull.py:73:    def closed(self) -> bool:
-devnull.py:77:    def flush(self) -> None:
-devnull.py:80:    def write(self, datum) -> int:
-devnull.py:89:    def read(self, size:int=None) -> str:
-devnull.py:105:    def readline(self) -> str:
-devnull.py:116:    def seek(self, offset:int, from_where:int=0) -> str:
 dorunrun.py:39:def dorunrun(command:Union[str, list],
-dorunrun.py:117:    def __contains__(self, something:object) -> bool:
-dorunrun.py:143:    def OK(self) -> bool:
-dorunrun.py:147:    def is_signal(self) -> bool:
-dorunrun.py:151:    def signal(self) -> int:
-fifo.py:77:    def __init__(self, 
-fifo.py:148:    def __str__(self) -> str:
-fifo.py:156:    def __call__(self, argument:Union[int, list]=60) -> Union[list, int]:
-fifo.py:170:    def wait_for_data(self, how_long:int) -> List[str]:
-fifo.py:201:    def write(self, messages:List[str]) -> int:
-fileutils.py:57:def all_dirs_in(s:str, depth:int=0) -> str:
-fileutils.py:69:def all_files_in(s:str, include_hidden:bool=False) -> str:
-fileutils.py:82:def all_files_like(s:str) -> str:
-fileutils.py:91:def all_module_files() -> str:
-fileutils.py:104:def build_file_list(f:str) -> List[str]:
-fileutils.py:125:def date_filter(filename:str, *, 
-fileutils.py:197:def expandall(s:str) -> str:
-fileutils.py:209:def fclose_all() -> None:
-fileutils.py:217:def file_name_filter(filename:str, env:str='.') -> str:
-fileutils.py:238:def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str: 
-fileutils.py:259:def get_file_type(path:str) -> str:
-fileutils.py:281:def got_data(filenames:str) -> bool:
-fileutils.py:296:def home_and_away(filename:str) -> str:
-fileutils.py:323:def is_hidden(path:str) -> bool:
-fileutils.py:330:def is_PDF(o:Union[bytes,str]) -> bool:
-fileutils.py:362:def lines_in_file(filename:str) -> int:
-fileutils.py:386:def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
-fileutils.py:425:def path_join(dir_part:str, file_part:str) -> str:
-fileutils.py:451:def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple:
-fileutils.py:484:def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> str:
-fileutils.py:499:def read_whitespace_file(filename:str) -> tuple:
-fname.py:80:    def __init__(self, s:str):
-fname.py:107:    def __bool__(self) -> bool:
-fname.py:119:    def __call__(self, new_content:str=None) -> Union[bytes, Fname]:
-fname.py:150:    def __len__(self) -> int:
-fname.py:160:    def __str__(self) -> str:
-fname.py:169:    def __format__(self, x) -> str:
-fname.py:173:    def __eq__(self, other) -> bool:
-fname.py:187:    def __lt__(self, other) -> bool:
-fname.py:200:    def __matmul__(self, other) -> bool:
-fname.py:221:    def all_but_ext(self) -> str:
-fname.py:231:    def busy(self) -> bool:
-fname.py:285:    def directory(self, terminated:bool=False) -> str:
-fname.py:299:    def empty(self) -> bool:
-fname.py:311:    def ext(self) -> str:
-fname.py:321:    def fname(self) -> str:
-fname.py:331:    def fname_only(self) -> str:
-fname.py:341:    def fqn(self) -> str:
-fname.py:352:    def hash(self) -> str:
-fname.py:373:    def is_URI(self) -> bool:
-fname.py:382:    def lock(self, exclusive:bool = True, nowait:bool = True) -> bool:
-fname.py:397:    def locked(self) -> bool:
-fname.py:406:    def show(self) -> None:
-fname.py:429:    def unlock(self) -> bool:
-linuxutils.py:75:def byte_scale(i:int, key:str='X') -> str:
-linuxutils.py:94:def bytes2human(n:int) -> str:
-linuxutils.py:111:def byte_size(s:str) -> int:
-linuxutils.py:134:def columns() -> int:
-linuxutils.py:148:def cpucounter() -> int:
-linuxutils.py:157:def do_not_run_twice(name:str) -> None:
-linuxutils.py:169:def dorunrun(command:Union[str, list],
-linuxutils.py:244:def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False, split_it:bool=False) -> str:
-linuxutils.py:265:    def __contains__(self, something:object) -> bool:
-linuxutils.py:291:    def OK(self) -> bool:
-linuxutils.py:295:    def is_signal(self) -> bool:
-linuxutils.py:299:    def signal(self) -> int:
-linuxutils.py:387:def explain(code:int) -> str:
-linuxutils.py:403:def getallgroups():
-linuxutils.py:410:def getgroups(u:str) -> tuple:
-linuxutils.py:420:def getproctitle() -> str:
-linuxutils.py:431:def getusers_in_group(g:str) -> tuple:
-linuxutils.py:438:def group_exists(g:str) -> bool:
-linuxutils.py:449:def hms_to_hours(hms:str) -> float:
-linuxutils.py:469:def hours_to_hms(h:float) -> str:
-linuxutils.py:491:def iso_time(seconds:int) -> str:
-linuxutils.py:495:def iso_seconds(timestring:str) -> int:
-linuxutils.py:503:def memavail() -> float:
-linuxutils.py:513:def mygroups() -> Tuple[str]:
-linuxutils.py:521:def mymem() -> int:
-linuxutils.py:530:def now_as_seconds() -> int:
-linuxutils.py:534:def now_as_string() -> str:
-linuxutils.py:543:def parse_proc(pid:int) -> dict:
-linuxutils.py:574:def pids_of(process_name:str, anywhere:Any=None) -> list:
-linuxutils.py:596:def script_driven() -> bool:
-linuxutils.py:605:def setproctitle(s:str) -> str:
-linuxutils.py:624:def signal_name(i:int) -> str:
-linuxutils.py:635:def sloppy(o:object) -> SloppyDict:
-linuxutils.py:643:    def __getattr__(self, k:str) -> object:
-linuxutils.py:647:    def __setattr__(self, k:str, v:object) -> None:
-linuxutils.py:650:    def __delattr__(self, k:str) -> None:
-linuxutils.py:654:    def reorder(self, some_keys:list=[], self_assign:bool=True) -> SloppyDict:
-linuxutils.py:675:def deepsloppy(o:dict) -> Union[SloppyDict, object]:
-linuxutils.py:698:    def __missing__(self, k:str) -> object:
-linuxutils.py:702:    def __getattr__(self, k:str) -> object:
-linuxutils.py:705:    def __setattr__(self, k:str, v:object) -> None:
-linuxutils.py:708:    def __delattr__(self, k:str) -> None:
-linuxutils.py:712:def snooze(n:int) -> int:
-linuxutils.py:732:def squeal(s: str=None, rectus: bool=True, source=None) -> str:
-linuxutils.py:752:def stalk_and_kill(process_name:str) -> bool:
-linuxutils.py:816:    def __init__(self, *, units:Any='milli'):
-linuxutils.py:835:    def start(self) -> float:
-linuxutils.py:846:    def lap(self, event:object=None) -> float:
-linuxutils.py:863:    def stop(self) -> float:
-linuxutils.py:880:    def __str__(self) -> str:
-linuxutils.py:910:def this_function():
-linuxutils.py:916:def this_is_the_time(current_minute:int, schedule:list) -> bool:
-linuxutils.py:929:def this_line(level: int=1, invert: bool=True) -> int:
-linuxutils.py:948:def time_print(s:str) -> None:
-linuxutils.py:952:def time_match(t, set_of_times:list) -> bool:
-linuxutils.py:964:def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
-linuxutils.py:996:def trap_signals(ignore_list:list=std_ignore,
-linuxutils.py:1012:def type_and_text(e:Exception) -> str:
-linuxutils.py:1035:def unwhite(s: str) -> str:
-linuxutils.py:1045:def urdate(dt:datetime.datetime = None) -> int:
-linuxutils.py:1064:def valid_item_name(s:str) -> bool:
-linuxutils.py:1073:def version(full:bool = True) -> str:
-linuxutils.py:1100:def wall(s: str):
-linuxutils.py:1105:def whereami() -> str:
-linuxutils.py:1119:def whoami() -> None:
+fileutils.py:48:def all_dirs_in(s:str, depth:int=0) -> str:
+fileutils.py:60:def all_files_in(s:str, include_hidden:bool=False) -> str:
+fileutils.py:73:def all_files_like(s:str) -> str:
+fileutils.py:82:def all_module_files() -> str:
+fileutils.py:95:def build_file_list(f:str) -> List[str]:
+fileutils.py:116:def date_filter(filename:str, *, 
+fileutils.py:188:def expandall(s:str) -> str:
+fileutils.py:200:def fclose_all() -> None:
+fileutils.py:208:def file_name_filter(filename:str, env:str='.') -> str:
+fileutils.py:229:def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str: 
+fileutils.py:250:def get_file_type(path:str) -> str:
+fileutils.py:272:def got_data(filenames:str) -> bool:
+fileutils.py:287:def home_and_away(filename:str) -> str:
+fileutils.py:314:def is_hidden(path:str) -> bool:
+fileutils.py:321:def is_PDF(o:Union[bytes,str]) -> bool:
+fileutils.py:353:def lines_in_file(filename:str) -> int:
+fileutils.py:377:def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
+fileutils.py:416:def path_join(dir_part:str, file_part:str) -> str:
+fileutils.py:442:def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple:
+fileutils.py:475:def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> str:
+fileutils.py:490:def read_whitespace_file(filename:str) -> tuple:
+fname.py:43:defined.
+linuxutils.py:71:def byte_scale(i:int, key:str='X') -> str:
+linuxutils.py:90:def bytes2human(n:int) -> str:
+linuxutils.py:107:def byte_size(s:str) -> int:
+linuxutils.py:130:def columns() -> int:
+linuxutils.py:144:def cpucounter() -> int:
+linuxutils.py:153:def dorunrun(command:Union[str, list],
+linuxutils.py:228:def dump_cmdline(args:argparse.ArgumentParser, return_it:bool=False, split_it:bool=False) -> str:
+linuxutils.py:371:def explain(code:int) -> str:
+linuxutils.py:387:def getallgroups():
+linuxutils.py:394:def getgroups(u:str) -> tuple:
+linuxutils.py:404:def getproctitle() -> str:
+linuxutils.py:415:def getusers_in_group(g:str) -> tuple:
+linuxutils.py:422:def group_exists(g:str) -> bool:
+linuxutils.py:433:def hms_to_hours(hms:str) -> float:
+linuxutils.py:453:def hours_to_hms(h:float) -> str:
+linuxutils.py:475:def iso_time(seconds:int) -> str:
+linuxutils.py:479:def iso_seconds(timestring:str) -> int:
+linuxutils.py:487:def memavail() -> float:
+linuxutils.py:497:def mygroups() -> Tuple[str]:
+linuxutils.py:509:def now_as_seconds() -> int:
+linuxutils.py:513:def now_as_string() -> str:
+linuxutils.py:522:def parse_proc(pid:int) -> dict:
+linuxutils.py:553:def pids_of(process_name:str, anywhere:Any=None) -> list:
+linuxutils.py:575:def script_driven() -> bool:
+linuxutils.py:584:def setproctitle(s:str) -> str:
+linuxutils.py:603:def signal_name(i:int) -> str:
+linuxutils.py:614:def sloppy(o:object) -> SloppyDict:
+linuxutils.py:654:def deepsloppy(o:dict) -> Union[SloppyDict, object]:
+linuxutils.py:691:def snooze(n:int) -> int:
+linuxutils.py:711:def splitter(group:Iterable, num_chunks:int) -> Iterable:
+linuxutils.py:741:def squeal(s: str=None, rectus: bool=True, source=None) -> str:
+linuxutils.py:761:def stalk_and_kill(process_name:str) -> bool:
+linuxutils.py:919:def this_function():
+linuxutils.py:925:def this_is_the_time(current_minute:int, schedule:list) -> bool:
+linuxutils.py:938:def this_line(level: int=1, invert: bool=True) -> int:
+linuxutils.py:957:def time_print(s:str) -> None:
+linuxutils.py:961:def time_match(t, set_of_times:list) -> bool:
+linuxutils.py:973:def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
+linuxutils.py:1005:def trap_signals(ignore_list:list=std_ignore,
+linuxutils.py:1021:def type_and_text(e:Exception) -> str:
+linuxutils.py:1044:def unwhite(s: str) -> str:
+linuxutils.py:1053:def user_from_uid(uid:int) -> str:
+linuxutils.py:1061:def valid_item_name(s:str) -> bool:
+linuxutils.py:1070:def version(full:bool = True) -> str:
+linuxutils.py:1097:def wall(s: str):
+linuxutils.py:1102:def whereami() -> str:
+linuxutils.py:1116:def whoami() -> None:
 netutils.py:13:def get_ssh_host_info(host_name:str=None, config_file:str=None) -> List[Dict]:
 rules.py:33:def NOP(o:object): return o
-rules.py:77:def program_basename(t:SloppyTree) -> SloppyTree:
-rules.py:86:def program_launch(t:SloppyTree) -> SloppyTree:
-rules.py:91:def program_jobfile(t:SloppyTree) -> SloppyTree:
-rules.py:102:def find_software() -> SloppyTree:
-setutils.py:29:    def __contains__(self, item): return True
+rules.py:76:def program_basename(t:SloppyTree) -> SloppyTree:
+rules.py:85:def program_launch(t:SloppyTree) -> SloppyTree:
+rules.py:90:def program_jobfile(t:SloppyTree) -> SloppyTree:
+rules.py:101:def find_software() -> SloppyTree:
 setutils.py:33:def notlikeanyof(search_term:str, sock_drawer:Iterable) -> bool:
 setutils.py:44:def nothinglikeit(search_term:str, sock_drawer:Iterable) -> bool:
 setutils.py:56:def set_encoder(obj:Any) -> str:
 setutils.py:69:def setify(obj):
-sloppytree.py:36:    def __missing__(self, k:str) -> object:
-sloppytree.py:45:    def __getattr__(self, k:str) -> object:
-sloppytree.py:53:    def __setattr__(self, k:str, v:object) -> None:
-sloppytree.py:60:    def __delattr__(self, k:str) -> None:
-sloppytree.py:67:    def __ilshift__(self, keys:Union[list, tuple]) -> SloppyTree:
-sloppytree.py:76:    def __len__(self) -> int:
-sloppytree.py:83:    def __invert__(self) -> int: 
-sloppytree.py:91:    def leaves(self) -> object:
-sloppytree.py:102:    def __iter__(self) -> object:
-sloppytree.py:110:    def traverse(self, with_indicator:bool=True) -> Union[Tuple[object, int], object]:
-sloppytree.py:132:    def __str__(self) -> str:
-slurmutils.py:55:def get_jobname(s:str) -> str:
-slurmutils.py:63:def hms_to_hours(hms:str) -> float:
-slurmutils.py:83:def hours_to_hms(h:float) -> str:
-slurmutils.py:101:def parse_sinfo(params:SloppyTree) -> SloppyTree:
-sqlitedb.py:56:    def __init__(self, path_to_db:str, **kwargs):
-sqlitedb.py:90:    def __str__(self) -> str:
-sqlitedb.py:96:    def __bool__(self) -> bool:
-sqlitedb.py:104:    def __call__(self) -> sqlite3.Cursor:
-sqlitedb.py:115:    def keys_off(self) -> None:
-sqlitedb.py:120:    def keys_on(self) -> None:
-sqlitedb.py:126:    def commit(self) -> bool:
-sqlitedb.py:139:    def execute_SQL(self, SQL:str, *args) -> object:
-sqlitedb.py:166:    def row_one(self, SQL:str, parameters:Union[tuple, None]=None) -> dict:
+slurmutils.py:54:def get_jobname(s:str) -> str:
+slurmutils.py:62:def hms_to_hours(hms:str) -> float:
+slurmutils.py:82:def hours_to_hms(h:float) -> str:
+slurmutils.py:100:def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
+slurmutils.py:158:def stat(jobid:Union[int,str]) -> SloppyTree:
+slurmutils.py:211:def stat_all() -> Dict[int, SloppyTree]:
 urdecorators.py:38:def null_decorator(o:object) -> object:
 urdecorators.py:45:def show_exceptions(func:object) -> object:
-urdecorators.py:50:    def func_wrapper(*args, **kwargs):
 urdecorators.py:63:def show_exceptions_and_frames(func:object) -> None:
-urdecorators.py:69:    def wrapper(*args, **kwds):
-urntp.py:38:    def __init__(self, **kwargs) -> None:
-urntp.py:49:    def _UNIX_time(self, integer_part: int, frac_part: int) -> float:
-urntp.py:56:    def __call__(self) -> tuple:
-urntp.py:76:    def __str__(self) -> str:
 urpacker.py:34:def set_to_list(o:object) -> object:
 urpacker.py:42:def brine(o:object, force_bytes=False) -> str:
 urpacker.py:56:def unbrine(s:str) -> object:
-urpacker.py:88:    def null_cryptor(b_data:bytes, *,
-urpacker.py:110:    def null_decryptor(b_data:bytes, *,
-urpacker.py:117:    def __init__(self, *,
-urpacker.py:133:    def _hooks(self, o:object) -> object:
-urpacker.py:145:    def attachIO(self,
-urpacker.py:185:    def write(self, o:object, *, 
-urpacker.py:231:    def read(self, format:str='python') -> object:
-whocalled.py:43:    def __init__(self, **kwargs):
-whocalled.py:51:    def __call__(self) -> tuple:
-whocalled.py:60:    def __str__(self) -> str:
+urtunnel.py:46:def drill_baby_drill(remote_host_info:uu.SloppyDict, password:str=None) -> SSHClient:
+urtunnel.py:63:def _getSSHConnection(info:uu.SloppyDict, sock=None, password:str=None) -> object:
 whocalled.py:67:def whocalledme(s:list=None) -> dict:
