@@ -396,7 +396,11 @@ def getgroups(u:str) -> tuple:
     Return a tuple of all the groups that "u" belongs to.
     """
     groups = [g.gr_name for g in grp.getgrall() if u in g.gr_mem]
-    primary_group = pwd.getpwnam(u).pw_gid
+    try:
+        primary_group = pwd.getpwnam(u).pw_gid
+    except KeyError as e:
+        return tuple()
+
     groups.append(grp.getgrgid(primary_group).gr_name)
     return tuple(groups)
 
