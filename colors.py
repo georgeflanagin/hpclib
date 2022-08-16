@@ -11,3 +11,14 @@ BashColors['YELLOW']= '\033[1;33m'
 BashColors['REVERSE']= "\033[7m"
 BashColors['REVERT']= "\033[0m"
 BashColors['GREEN']="\033[0;32m"
+
+units = {
+    'cm':100,
+    'mm':1000,
+    'm':1,
+    'ft':3.28
+    }
+
+
+def DoF(dist:float, f:float, n:float, unit:str='cm'):
+    return 2 * units[unit] * dist * dist * n * 0.00003 / (f/1000) 

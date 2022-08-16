@@ -476,6 +476,13 @@ def hours_to_hms(h:float) -> str:
 ####
 # I
 ####
+def is_faculty(netid:str) -> bool:
+    try:
+        return not netid[2] in string.digits
+    except Exception as e:
+        return False
+
+
 def iso_time(seconds:int) -> str:
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(seconds))
 
