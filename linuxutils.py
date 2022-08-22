@@ -150,6 +150,40 @@ def cpucounter() -> int:
     return names[platform.platform().split('-')[0]]()
 
 
+###
+# D
+###
+
+def daemonize_me() -> None:
+    """
+    Turn this program into a daemon.    
+    """
+    try:
+        pid = os.fork()
+        if pid: sys.exit(os.EX_OK)
+
+    except OSError as e:
+        print(f"Fork failed. {e.error} = {e.strerror}")
+        sys.exit(os.EX_OSERR)
+
+    os.chdir("/")
+    os.setsid()
+    os.umask(0)
+
+    try:
+        pid = os.fork()
+        if pid:
+            print(f"Daemon's PID is {pid}")
+            sys.exit(os.EX_OK)
+
+    except OSError as e:
+        print(f"Second fork failed. {e.error} = {e.strerror}")
+        sys.exit(os.EX_OSERR)
+
+    else:
+        return
+
+
 def dorunrun(command:Union[str, list],
     timeout:int=None,
     verbose:bool=False,

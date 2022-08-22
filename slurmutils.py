@@ -85,7 +85,7 @@ def hours_to_hms(h:float) -> str:
     Convert a number of hours to "SLURM time."
     """
 
-    days = int(h / 24)
+    days = h // 24
     h -= days * 24
     hours = int(h)
     h -= hours
