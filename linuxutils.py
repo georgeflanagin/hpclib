@@ -201,6 +201,7 @@ def dorunrun(command:Union[str, list],
     return_datatype -- this argument corresponds to the item 
         the caller wants returned. It can be one of these values.
 
+
             bool : True if the subprocess exited with code 0.
             int  : the exit code itself.
             str  : the stdout of the child process.
