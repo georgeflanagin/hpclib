@@ -13,6 +13,7 @@ import copy
 from   ctypes import cdll, byref, create_string_buffer
 import datetime
 import enum
+import glob
 import grp
 import inspect
 import os
@@ -451,9 +452,19 @@ def getproctitle() -> str:
         return ""
 
 
+default_group = 'people'
 def getusers_in_group(g:str) -> tuple:
+    """
+    Linux's group registry does not know about the default group
+    that is kept in LDAP. 
+    TODO: This function requires some cleanup before release.
+    """
+
+    global default_group
     try:
-        return tuple(grp.getgrnam(g).gr_mem)
+        return ( tuple(",".join(glob.glob('/home/*')).replace('/home/','').split(','))
+            if g == default_group else
+            tuple(grp.getgrnam(g).gr_mem) )
     except KeyError as e:
         return tuple()
 
@@ -513,9 +524,23 @@ def hours_to_hms(h:float) -> str:
 ####
 def is_faculty(netid:str) -> bool:
     try:
-        return not netid[2] in string.digits
+        return is_valid_netid(netid) and not netid[2] in string.digits
     except Exception as e:
         return False
+
+
+def is_student(netid:str) -> bool:
+    try: 
+        return is_valid_netid(netid) and netid[2] in string.digits
+    except Exception as e:
+        return False
+
+
+def is_valid_netid(netid:str) -> bool:
+    try:
+        return len(getgroups(netid))!=0
+    except Exception as e:
+            return False
 
 
 def iso_time(seconds:int) -> str:
