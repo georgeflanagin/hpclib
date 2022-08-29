@@ -81,13 +81,14 @@ def show_exceptions_and_frames(func:object) -> None:
                 print("Exiting. You asked to stop the debugger.")
                 sys.exit(os.EX_OK)
 
-            print("{}".format(e))
+            print(f"{e=}")
             # Who am I?
-            pid = 'pid{}'.format(os.getpid())
+            pid = f'pid{os.getpid()}'
 
             # First order of business: create a dump file. The file will be under
             # $CANOE_LOG with today's ISO date string as the dir name.
-            new_dir = os.path.join(os.getcwd(), datetime.datetime.today().isoformat()[:10])
+            here = os.getcwd() if os.getcwd() != os.sep else os.environ('HOME')
+            new_dir = os.path.join(here, datetime.datetime.today().isoformat()[:10])
             os.makedirs(new_dir, exist_ok=True)
 
             # The file name will be the pid (possibly plus something like "A" if this
@@ -104,7 +105,7 @@ def show_exceptions_and_frames(func:object) -> None:
                     except Exception as e:
                         sys.stderr.write(str(e))
 
-                    print('Exception raised {}: "{}"'.format(e_type, e_val))
+                    print(f'Exception raised {e_type}: "{e_val}"')
                     
                     # iterate through the frames in reverse order so we print the
                     # most recent frame first
@@ -124,7 +125,7 @@ def show_exceptions_and_frames(func:object) -> None:
                         # log every local variable of the frame
                         for k, v in f_locals.items():
                             try:
-                                print('    {} = {}'.format(k, v))
+                                print(f'    {k} = {v}')
                             except:
                                 pass
 
