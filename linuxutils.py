@@ -12,6 +12,8 @@ from   collections.abc import Iterable
 import copy
 from   ctypes import cdll, byref, create_string_buffer
 import datetime
+import dateutil
+from   dateutil import parser
 import enum
 import glob
 import grp
@@ -127,6 +129,35 @@ def byte_size(s:str) -> int:
 ###
 # C
 ###
+
+def coerce(s:str) -> Union[int, float, datetime.datetime, tuple, str]:
+    """
+    Examine a shred of str data, and see if we can make something 
+    more structured from it. 
+    """
+    try:
+        return int(s)
+    except:
+        pass
+
+    try:
+        return float(s)
+    except:
+        pass
+
+    try:
+        return parser.parse(s)
+    except:
+        pass
+
+    if ',' in s:
+        try:
+            return tuple(coerce(part) for part in s.split(','))
+        except:
+            pass
+
+    return s
+        
 
 def columns() -> int:
     """

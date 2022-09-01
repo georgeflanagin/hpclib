@@ -29,6 +29,7 @@ from   fname import Fname
 import linuxutils
 import setutils
 from   sloppytree import SloppyTree
+from   urdecorators import trap
 
 ###
 # Objects
@@ -93,9 +94,84 @@ def hours_to_hms(h:float) -> str:
     h -= minutes/60
     seconds = int(h*60)
 
-    return ( f"{hours:02}:{minutes:02}:{seconds:02}"
-        if h < 24 else
-        f"{days}-{hours:02}:{minutes:02}:{seconds:02}" )
+    return ( f"{days}-{hours:02}:{minutes:02}:{seconds:02}" 
+        if days else
+        f"{hours:02}:{minutes:02}:{seconds:02}" )
+
+
+def node_busy(node:object) -> bool:
+    try:
+        node = int(node)
+    except:
+        return None
+
+    command=f"scontrol show nodes spdr{node:02}"
+    result = SloppyTree(dorunrun(command, return_datatype=dict))
+    if not result.OK: return None
+    result = parse_slurm_data(result.stdout)
+    return not not int(result.CPUAlloc)
+
+
+def node_powerstatus(node:object) -> Union[int,tuple]:
+    """
+    Inquire about the status of the node.
+
+    node -- a node number, or a list of node numbers. 
+
+    returns --  Returns 1 if the node is running, 0 if it is not.
+        and None if the arguments were bad. If you only ask
+        about one node, it returns a scalar rather than a list
+        with only one value.
+    """
+    command = lambda node : f"sudo cv-power -n spdr{node:02} status"
+
+    nodes = [node] if isinstance(node, (str, int)) else node
+    try:
+        nodes = tuple( int(node) for node in nodes )
+    except Exception as e:
+        return None
+
+    results = []
+    for node in nodes:
+        result = SloppyTree(dorunrun(command(node), return_datatype=dict))
+        if not result.OK: 
+            results.append(None)
+            continue
+
+        text = next(reversed(result.stdout.split(':')))
+        results.append(1 if 'on' in text else 0)        
+
+    return results[0] if len(results) == 1 else results 
+
+
+def node_start(node:Union[int,str]) -> bool:
+    """
+    Start a node that is currently stopped. 
+
+    node -- a node number. 
+
+    returns --  True if it was stopped and is now started.
+                False if it was stopped and this command did not work.
+                None if you asked to start a node that is already running.
+    """
+    if node_powerstatus(node) in (None, 1): return None
+    command = f"sudo cv-power -n spdr{node:02} on"
+    return dorunrun(command)
+
+
+def node_stop(node:Union[int,str]) -> bool:
+    """
+    Stop a node that is currently running. 
+
+    node -- a node number. 
+
+    returns --  True if it was running and is now stopped.
+                False if it was running and this command did not work.
+                None if you asked to start a node that is already running.
+    """
+    if node_powerstatus(node) in (None, 0): return None
+    command = f"sudo cv-power -n spdr{node:02} off"
+    return dorunrun(command)
 
 
 def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
@@ -157,6 +233,38 @@ def parse_sinfo(params:SloppyTree=None) -> SloppyTree:
     for k, v in users.items(): tree[k].users = v
 
     return tree
+
+
+@trap
+def parse_slurm_data(text:str) -> SloppyTree:
+    """
+    Take one of the blobs that comes back from scontrol requests,
+    and try to make some sense of it. The results are formatted
+    for human readability, and that gets in the way of programmatic
+    understanding.
+    """
+    result = {}
+    lines = [ line for line in text.split('\n') if line ]
+    for line in lines:
+        eq_signs = line.count('=')
+        if eq_signs == 0:
+            continue
+
+        elif eq_signs == 1:
+            k, v = line.split('=')
+            result[k.strip()] = linuxutils.coerce(v.strip())
+            continue
+
+        else:
+            stmts = line.split()
+            for stmt in stmts:
+                try:
+                    k, v = stmt.split('=')
+                    result[k.strip()] = linuxutils.coerce(v.strip())
+                except:
+                    pass
+
+    return SloppyTree(result)
 
 
 def stat(jobid:Union[int,str]) -> SloppyTree:
