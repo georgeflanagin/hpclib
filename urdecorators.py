@@ -58,7 +58,7 @@ def null_decorator(o:object) -> object:
     return o
 
 
-def printvars(local_vars:dict) -> None:
+def printvars(f_locals:dict) -> None:
     """
     print the vars from a stack frame. If tabulate is
     available, we can print a nice looking table.
@@ -73,7 +73,7 @@ def printvars(local_vars:dict) -> None:
         # function returns. Otherwise, it prints the
         # stack frame more crudely, w/o formatting. 
         ###
-        as_list = [ [k, v] for k, v in local_vars.items() ]
+        as_list = [ [k, v] for k, v in f_locals.items() ]
         try:
             print(tabulate(as_list, 
                 headers=['object', 'value'], 

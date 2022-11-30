@@ -612,9 +612,9 @@ def now_as_seconds() -> int:
     return time.clock_gettime(0)
 
 
-def now_as_string() -> str:
+def now_as_string(replacement:str=' ') -> str:
     """ Return full timestamp for printing. """
-    return datetime.datetime.now().isoformat()[:21].replace('T',' ')
+    return datetime.datetime.now().isoformat()[:21].replace('T',replacement)
 
 
 ####
