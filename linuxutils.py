@@ -188,8 +188,10 @@ def cpucounter() -> int:
 
 def daemonize_me() -> None:
     """
-    Turn this program into a daemon.    
+    Turn this program into a daemon, if it is not already one.
     """
+    if os.getppid() == 1: return
+
     try:
         pid = os.fork()
         if pid: sys.exit(os.EX_OK)

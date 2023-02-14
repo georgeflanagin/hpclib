@@ -48,6 +48,7 @@ __required_version__ = (3, 6)
 
 __license__ = 'MIT'
 
+import io
 import os
 import select
 import stat
@@ -57,7 +58,7 @@ if sys.version_info < __required_version__:
     print(f"This code requires Python version {__required_version__} or later.")
     sys.exit(os.EX_SOFTWARE)
 
-from   urdecorators import show_exceptions_and_frames as trap
+from   urdecorators import trap
 
 class FIFO:
     """
@@ -181,7 +182,7 @@ class FIFO:
 
         try:
             if (self.fifo, select.POLLIN) in poll.poll(how_long * 1000):
-                data = os.read(self.fifo, 1024).decode('utf-8')
+                data = os.read(self.fifo, io.DEFAULT_BUFFER_SIZE*16).decode('utf-8')
                 data = [ _ for _ in data.split(self.delimiter) 
                     if _ and not _.startswith(self.ignore) ]
 
