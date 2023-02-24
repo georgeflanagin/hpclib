@@ -186,7 +186,7 @@ def cpucounter() -> int:
 # D
 ###
 
-def daemonize_me() -> None:
+def daemonize_me() -> bool:
     """
     Turn this program into a daemon, if it is not already one.
     """
@@ -215,7 +215,7 @@ def daemonize_me() -> None:
         sys.exit(os.EX_OSERR)
 
     else:
-        return
+        return True
 
 
 def dorunrun(command:Union[str, list],
