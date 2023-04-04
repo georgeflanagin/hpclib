@@ -172,6 +172,11 @@ def quoted() -> str:
     raise EndOfGenerator(''.join(body))
 
 
+class EndOfGenerator(StopIteration):
+    def __init__(self, value):
+        self.value = value
+
+
 class EndOfParse(StopIteration):
     """
     An exception raised when parsing operations terminate. Iterators raise

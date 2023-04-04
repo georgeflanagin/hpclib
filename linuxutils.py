@@ -1074,7 +1074,7 @@ def time_match(t, set_of_times:list) -> bool:
               (t.weekday() in set_of_times[4]))
 
 
-def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
+def tombstone(args:Any=None, silent:bool=False) -> str:
     """
     Print out a message, data, whatever you pass in, along with
     a timestamp and the PID of the process making the call. 
@@ -1083,8 +1083,7 @@ def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
     if silent, we return the formatted string, but do not print.
     """
 
-    i = str(AX()).rjust(4,'0')
-    a = i + " " + now_as_string() + " :: " + str(os.getpid()) + " :: "
+    a = " " + now_as_string() + " :: " + str(os.getpid()) + " :: "
 
     if not silent: sys.stderr.write(a)
     if isinstance(args, str) and not silent:
@@ -1100,7 +1099,7 @@ def tombstone(args:Any=None, silent:bool=False) -> Tuple[int, str]:
     if not silent: sys.stderr.flush()
 
     # Return the info for use by CanoeDB.tombstone()
-    return i, a+str(args)
+    return a+str(args)
     
 
 std_ignore = [ signal.SIGCHLD, signal.SIGHUP, signal.SIGINT, signal.SIGPIPE, signal.SIGUSR1, signal.SIGUSR2 ]
