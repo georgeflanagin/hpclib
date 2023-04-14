@@ -175,7 +175,7 @@ class Value(namedtuple('Value', 'status index value expected')):
     '''
 
     @staticmethod
-    def success(index, actual) -> Value:
+    def success(index:int, actual:object) -> Value:
         '''
         Factory to create success Value.
         '''
@@ -183,7 +183,7 @@ class Value(namedtuple('Value', 'status index value expected')):
 
 
     @staticmethod
-    def failure(index, expected) -> Value:
+    def failure(index:int, expected:object) -> Value:
         '''
         Factory to create failure Value.
         '''
@@ -327,13 +327,13 @@ class Parser:
         '''
 
         @Parser
-        def compose_parser(text, index):
+        def compose_parser(text:str, index:int):
             result = self(text, index)
             return result if not result.status else other(text, result.index)
         return compose_parser
 
 
-    def joint(self, *parsers):
+    def joint(self, *parsers:Iterable):
         '''
         (+) Joint two or more parsers into one. Return the aggregate of two results
         from this two parser.
@@ -351,7 +351,7 @@ class Parser:
         NOTICE: without backtrack.
         '''
         @Parser
-        def choice_parser(text, index):
+        def choice_parser(text:str, index:int):
             result = self(text, index)
             return result if result.status or result.index != index else other(text, index)
 
@@ -366,7 +366,7 @@ class Parser:
         any input, and then parser q is tried.
         '''
         @Parser
-        def try_choice_parser(text, index):
+        def try_choice_parser(text:str, index:int):
             result = self(text, index)
             return result if result.status else other(text, index)
 
@@ -382,7 +382,7 @@ class Parser:
         a_parser << whitespace_parser
         '''
         @Parser
-        def skip_parser(text, index):
+        def skip_parser(text:str, index:int):
             res = self(text, index)
             if not res.status:
                 return res
@@ -401,7 +401,7 @@ class Parser:
         any input. Typical use is with EOF, or similar.
         '''
         @Parser
-        def ends_with_parser(text, index):
+        def ends_with_parser(text:str, index:int):
             res = self(text, index)
             if not res.status:
                 return res
@@ -989,10 +989,10 @@ def spaces() -> Parser:
 
 
 def letter() -> Parser:
-    '''
-    Parse a letter in alphabet.
-    '''
-
+    """
+    Parse a character that Unicode understands to be a 
+    Letter type, Lm, Lt, Lu, Ll, or Lo
+    """
     @Parser
     def letter_parser(text:str, index:int=0) -> Parser:
         if index < len(text) and text[index].isalpha():
@@ -1003,17 +1003,35 @@ def letter() -> Parser:
     return letter_parser
 
 
+def ascii_letter() -> Parser:
+    """
+    Like letter, but restricted to 7-bit ASCII
+    """
+
+    @Parser
+    def ascii_letter_parser(text:str, index:int=0) -> Parser:
+        
+        c = text.get(index)
+        if c is not None and (c.islower() or c.isupper()):
+            return Value.success(index + 1, text[index])
+        else:
+            return Value.failure(index, 'an ascii letter')
+
+    return ascii_letter_parser
+
+
 def digit() -> Parser:
     '''
     Parse a digit. 
     '''
     @Parser
-    def digit_parser(text, index=0):
+    def digit_parser(text:str, index=0):
         import string
         if index < len(text) and text[index] in string.digits:
             return Value.success(index + 1, text[index])
         else:
             return Value.failure(index, 'a digit')
+
     return digit_parser
 
 
@@ -1094,22 +1112,61 @@ TIMESTAMP   = regex(r'[\d]{1,4}/[\d]{1,2}/[\d]{1,2} [\d]{1,2}:[\d]{1,2}:[\d]{1,2
 # US 10 digit phone number, w/ or w/o dashes and spaces embedded.
 US_PHONE    = regex(r'[2-9][\d]{2}[ -]?[\d]{3}[ -]?[\d]{4}')
 
-def string(s:str):
-    '''
-    Parses a string.
-    '''
+
+###
+# Replaces the string parser in Parsec3. See notes in README, and 
+# the two functions below, string_parsec3 and string_parsec4.
+#
+# This is the legacy compatibility hack. If PARSEC3_STRING
+# is set in the environment, the string parsers will work
+# as they did before, advancing the index by the number of
+# characters matched. Otherwise, the index does not advance
+# on failure. Success in both cases is unchanged.
+###
+
+def string_parsec4(token:str):
+    """
+    returns :
+        success, advances index by len(token), token
+        failure, no change to index, token 
+    """
     @Parser
-    def string_parser(text, index=0):
-        slen, tlen = len(s), len(text)
-        if ''.join(text[index:index + slen]) == s:
-            return Value.success(index + slen, s)
+    def string_parser(input_text, index=0):
+        if input_text.startswith(token):
+            return Value.success(index + len(token), token)
         else:
-            matched = 0
-            while matched < slen and index + matched < tlen and text[index + matched] == s[matched]:
-                matched = matched + 1
-            return Value.failure(index + matched, s)
+            return Value.failure(index, token)
+
     return string_parser
 
+
+def string_parsec3(token:str):
+    """
+    NOTE: this function behaves like string() in Parsec 3.3.
+
+    returns :
+        success, advances index by len(token), token
+        failure, index advanced by n matching chars [0..len(token)], token
+    """
+    @Parser
+    def string_partial(input_text:str, index:int=0):
+
+        token_len, input_text_len = len(token), len(input_text)
+        if input_text.startswith(token):
+            return Value.success(index + token_len, token)
+        else:
+
+            matched = 0
+            while ( matched < token_len and
+                    index + matched < input_text_len and 
+                    text[index+matched] == token[matched] ):
+                matched+=1
+
+            return Value.failure(index+matched, token)
+
+    return string_partial
+
+string = string_parsec3 if os.getenv('PARSEC3_STRING') else string_parsec4
 
 ##########################################################################
 # SECTION 8: Special purpose parsers.
@@ -1134,7 +1191,7 @@ def fix(fn:Callable) -> Parser:
     return (lambda x: x(x))(lambda y: fn(lambda *args: y(y)(*args)))
 
 
-def exclude(p: Parser, exclude: Parser) -> Parser:
+def exclude(p: Parser, exclude:Parser) -> Parser:
     '''
     Fails parser p if parser `exclude` matches
     '''
@@ -1154,7 +1211,7 @@ def lookahead(p: Parser) -> Parser:
     Parses without consuming
     '''
     @Parser
-    def lookahead_parser(text, index) -> Value:
+    def lookahead_parser(text:str, index:int) -> Value:
         res = p(text, index)
         if res.status:
             return Value.success(index, res.value)
@@ -1169,7 +1226,7 @@ def unit(p: Parser) -> Parser:
     the parser succeeds
     '''
     @Parser
-    def unit_parser(text, index):
+    def unit_parser(text:str, index:int):
         res = p(text, index)
         if res.status:
             return Value.success(res.index, res.value)
@@ -1244,7 +1301,7 @@ class EndOfGenerator(StopIteration):
     a StopIteration exception when they exhaust the input; this mod gives
     us something useful.
     """
-    def __init__(self, value):
+    def __init__(self, value:Value):
         self.value = value
 
 
@@ -1253,7 +1310,7 @@ class EndOfParse(StopIteration):
     As above, but this exception can be raised when we reach end of all parsing
     to signal the true "end" if we want/need to distinguish between them.
     """
-    def __init__(self, value):
+    def __init__(self, value:Value):
         self.value = value
 
 
@@ -1266,4 +1323,45 @@ def quoted() -> str:
     raise EndOfGenerator(''.join(body))
 
 
+def parser_from_strings(s:Union[str, Iterable], 
+    cmap:Union[str, Callable]=None) -> Parser:
+    """
+    Factory for string parsers. NOTE that this function is not
+        itself a Parser, but returns a Parser object joined 
+        with the try-choice operator (^).
+
+    s -- an iterable of strings, or a whitespace delimited string of text.
+    
+    cmap -- an optional callable to be used as the argument to .parsecmap().
+        If called with a str, the argument is accepted without comment or 
+        checking. If it is a callable, an exception is raised if the 
+        callable is nameless or has a name that cannot be determined 
+        programmatically. 
+
+        It is worth noting that the name of a callable such as str.lower
+        is "lower" although the name of int is "int". In the first
+        case, you would want to use "str.lower". 
+
+    returns -- a Parser that tries all the strings non-destructively, and 
+        vacuums up any trailing whitespace. The sub-parsers are tried 
+        deterministically in the order in which they appear in the argument
+        to the factory function. 
+
+    NOTE: this factory will work with Parsec3 or Parsec4 strings.
+    """
+    s = s.strip().split() if isinstance(s, str) else s
+    if cmap is None:
+        print(" ^ ".join([ f"lexeme(string('{_}'))" for _ in s ]))
+        return eval(" ^ ".join([ f"lexeme(string('{_}'))" for _ in s ]))
+
+    if callable(cmap):
+        try:
+            cmap = cmap.__name__
+        except Exception as e:
+            raise Exception(f"Unable to get name of {cmap}")
+    else:
+        cmap = str(cmap)
+
+    return eval(" ^ ".join([ f"lexeme(string('{_}').parsecmap({cmap}))" for _ in s ]))
+        
 
