@@ -11,8 +11,6 @@ from   typing import *
 #   are included. New comments are marked with a preceding and following group
 #   of three # characters, and the original docstrings use triple single quotes
 #   rather than triple double quotes.
-#  Revised for modern Python; no longer compatible with Python 2. This version
-#   requires Python 3.8
 #  To the extent practical, alphabetized the functions.
 #  Inserted type hints.
 #  Added a __bool__ function to the Value class.
@@ -21,10 +19,16 @@ from   typing import *
 #  Changed name of any() function to any_char() to avoid conflicts with 
 #   Python built-in of the same name.
 #  Where practical, f-strings are used for formatting.
+#  Revised for modern Python; no longer compatible with Python 2. This version
+#   requires Python 3.8.
 #  A number of definitions of characters are provided, and they
 #   are named as standard symbols: TAB, NL, CR, etc.
 #  Many custom parsers are likely to include parsers for common programming
 #   elements (dates, IP addresses, timestamps). These are now included. 
+#  There are two versions of the `string` parser. The new version consumes
+#   no input on failure. The older version can be activated by defining
+#   the environment variable PARSEC3_STRING. The value is unimportant; it 
+#   only needs to be defined.
 #
 # ** A note on the use of the import statement. The import near the top of the 
 #    file imports string, and creates an entry in the system modules table 
@@ -81,6 +85,7 @@ import warnings
 
 TAB     = '\t'
 CR      = '\r'
+NL      = '\n'
 LF      = '\n'
 VTAB    = '\f'
 BSPACE  = '\b'
@@ -169,24 +174,31 @@ class ParseError(RuntimeError):
 ##########################################################################
 class Value: pass
 class Value(namedtuple('Value', 'status index value expected')):
-    '''
+    """
     Value represents the result of the Parser. namedtuple is a little bit of 
     difficult beast, adding as much syntactic complexity as it removes.
-    '''
+
+    Here the types are:
+        status   -- bool
+        index    -- int
+        value    -- object
+        expected -- str
+
+    """
 
     @staticmethod
     def success(index:int, actual:object) -> Value:
-        '''
+        """
         Factory to create success Value.
-        '''
+        """
         return Value(True, index, actual, None)
 
 
     @staticmethod
     def failure(index:int, expected:object) -> Value:
-        '''
+        """
         Factory to create failure Value.
-        '''
+        """
         return Value(False, index, None, expected)
 
 
@@ -204,7 +216,10 @@ class Value(namedtuple('Value', 'status index value expected')):
         """
         Change the index, and return a new object.
         """
-        return self if index is None else Value(self.status, index, self.value, self.expected)
+        return ( self 
+            if index is None else 
+                Value(self.status, index, self.value, self.expected)
+                )
 
 
     @staticmethod
@@ -1080,7 +1095,7 @@ WHITESPACE  = regex(r'\s*', re.MULTILINE)
 
 # And the most common parser of them all, written here in a form
 # that is suitable for a decorator.
-lexeme = lambda p: p << WHITESPACE
+lexeme      = lambda p: p << WHITESPACE
 
 # Either "0" or something that starts with a non-zero digit, and may
 # have other digits following.
@@ -1089,7 +1104,7 @@ digit_str   = lexeme(DIGIT_STR)
 
 # HEX numbers are allowed to start with zero.
 HEX_STR     = regex(r'[0-9a-fA-F]+')
-hex_str     = lexeme(DIGIT_STR)
+hex_str     = lexeme(HEX_STR)
 
 # Spec for how a floating point number is written.
 IEEE754     = regex(r'-?(0|[1-9][\d]*)([.][\d]+)?([eE][+-]?[\d]+)?')
@@ -1105,68 +1120,60 @@ pyint       = lexeme(PYINT)
 
 # HH:MM:SS in 24 hour format.
 TIME        = regex(r'(?:[01]\d|2[0123]):(?:[012345]\d):(?:[012345]\d)')
+time        = lexeme(TIME)
 
 # ISO Timestamp
 TIMESTAMP   = regex(r'[\d]{1,4}/[\d]{1,2}/[\d]{1,2} [\d]{1,2}:[\d]{1,2}:[\d]{1,2}')
+timestamp   = lexeme(TIMESTAMP)
 
 # US 10 digit phone number, w/ or w/o dashes and spaces embedded.
 US_PHONE    = regex(r'[2-9][\d]{2}[ -]?[\d]{3}[ -]?[\d]{4}')
-
+us_phone    = lexeme(US_PHONE)
 
 ###
-# Replaces the string parser in Parsec3. See notes in README, and 
-# the two functions below, string_parsec3 and string_parsec4.
-#
-# This is the legacy compatibility hack. If PARSEC3_STRING
-# is set in the environment, the string parsers will work
-# as they did before, advancing the index by the number of
-# characters matched. Otherwise, the index does not advance
-# on failure. Success in both cases is unchanged.
+# This is He Tao's original string parser. If the first n-characters of
+# of the text matches and n < len(text), it advances the index by n *and*
+# it returns a Value.failure. 
 ###
-
-def string_parsec4(token:str):
-    """
-    returns :
-        success, advances index by len(token), token
-        failure, no change to index, token 
-    """
+def string_parsec3(s):
+    '''Parses a string.'''
     @Parser
-    def string_parser(input_text, index=0):
-        if input_text.startswith(token):
-            return Value.success(index + len(token), token)
+    def string_parser(text, index=0):
+        slen, tlen = len(s), len(text)
+        expression = ''.join(text[index:index + slen]) == s
+        if ''.join(text[index:index + slen]) == s:
+            return Value.success(index + slen, s)
         else:
-            return Value.failure(index, token)
-
+            matched = 0
+            while matched < slen and index + matched < tlen and text[index + matched] == s[matched]:
+                matched = matched + 1
+            return Value.failure(index + matched, s)
     return string_parser
 
 
-def string_parsec3(token:str):
-    """
-    NOTE: this function behaves like string() in Parsec 3.3.
-
-    returns :
-        success, advances index by len(token), token
-        failure, index advanced by n matching chars [0..len(token)], token
-    """
+###
+# This is my minor change to He Tao's code. If the first n-characters of
+# the text matches and n < len(text), the index is unchanged in the
+# Value.failure object that is returned.
+###
+def string_parsec4(s):
+    '''Parses a string.'''
     @Parser
-    def string_partial(input_text:str, index:int=0):
-
-        token_len, input_text_len = len(token), len(input_text)
-        if input_text.startswith(token):
-            return Value.success(index + token_len, token)
+    def string_parser(text, index=0):
+        slen, tlen = len(s), len(text)
+        expression = ''.join(text[index:index + slen]) == s
+        if ''.join(text[index:index + slen]) == s:
+            return Value.success(index + slen, s)
         else:
+            return Value.failure(index, s)
 
-            matched = 0
-            while ( matched < token_len and
-                    index + matched < input_text_len and 
-                    text[index+matched] == token[matched] ):
-                matched+=1
+    return string_parser
 
-            return Value.failure(index+matched, token)
-
-    return string_partial
-
-string = string_parsec3 if os.getenv('PARSEC3_STRING') else string_parsec4
+###
+# string is assigned to one or the other based on the environment
+# variable, PARSEC3_STRING
+###
+string = string_parsec3 if os.environ.get('PARSEC3_STRING') == 1 else string_parsec4
 
 ##########################################################################
 # SECTION 8: Special purpose parsers.
@@ -1266,6 +1273,7 @@ def timestamp() -> datetime.datetime:
     """
     return lexeme(TIMESTAMP).parsecmap(datetime.datetime.fromisoformat)
 
+quote  = string(QUOTE2)
 
 def charseq() -> str:
     """
@@ -1351,7 +1359,7 @@ def parser_from_strings(s:Union[str, Iterable],
     """
     s = s.strip().split() if isinstance(s, str) else s
     if cmap is None:
-        print(" ^ ".join([ f"lexeme(string('{_}'))" for _ in s ]))
+        # print(" | ".join([ f"lexeme(string('{_}'))" for _ in s ]))
         return eval(" ^ ".join([ f"lexeme(string('{_}'))" for _ in s ]))
 
     if callable(cmap):
