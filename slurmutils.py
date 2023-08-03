@@ -99,6 +99,24 @@ def hours_to_hms(h:float) -> str:
         f"{hours:02}:{minutes:02}:{seconds:02}" )
 
 
+def load_avg(node:str='') -> tuple:
+    """
+    Get the current usage of a node.
+    """
+    try:
+        node = int(node)
+        command=f"ssh spdr{node:02} 'cat /proc/loadavg'"
+    except:
+        command='cat /proc/loadavg'
+
+    result = SloppyTree(dorunrun(command, return_datatype=dict))
+    if not result.OK: return None
+    result = result.stdout.strip().split()
+    data = [ float(_) for _ in result[:-2] ]
+    data.append(int(result[-2].split('/')[0]))
+    return tuple(data)
+
+    
 def node_busy(node:object) -> bool:
     try:
         node = int(node)

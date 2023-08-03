@@ -24,16 +24,9 @@ if sys.version_info < min_py:
 import argparse
 import contextlib
 import getpass
-mynetid = getpass.getuser()
 import logging
 from   logging.handlers import RotatingFileHandler
 import pathlib
-
-###
-# From hpclib
-###
-import linuxutils
-from   urdecorators import trap
 
 ###
 # imports and objects that are a part of this project
@@ -52,11 +45,23 @@ __email__ = ['hpc@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
+def piddly(s:str) -> str:
+    """
+    A text wrapper for logging the output of multithreaded and
+    multiprocessing programs.
+
+    Example: 
+
+        logger=URLogger()
+        logger.info(piddly(msg))
+    """
+    return f": {os.getppid()} <- {os.getpid()} : {s}"
+
+
 class URLogger: pass
 
 class URLogger:
     __slots__ = {
-        'directory': 'directory with the log files',
         'logfile': 'the logfile associated with this object',
         'formatter': 'format string for the logging records.', 
         'level': 'level of the logging object',
@@ -64,10 +69,9 @@ class URLogger:
         'thelogger': 'the logging object this class wraps'
         }
 
-    __values__ = ('/var/log/URLogger', 
-        '/var/log/URLogger/log.log', 
+    __values__ = (
+        None,
         logging.Formatter('#%(levelname)-8s [%(asctime)s] (%(process)d) %(module)s: %(message)s'),
-        False,
         logging.WARNING,
         None,
         None)
@@ -86,18 +90,15 @@ class URLogger:
                 setattr(self, k, v)
         
         try:
-            os.makedirs(self.directory, mode=0o755, exist_ok=True)
-        except PermissionError as e:
-            sys.stderr.write(f"Cannot access {self.directory}\n")
+            if self.logfile is None:
+                self.logfile=os.path.join(os.getcwd(), "thisprog.log")
+            pathlib.Path(self.logfile).touch(mode=0o644, exist_ok=True)
+
+        except Exception as e:
+            sys.stderr.write(f"Cannot create or open {self.logfile}. {e}\n")
             raise e from None
 
-        # log warnings to warning log file. 
-        try:
-            pathlib.Path(self.logfile).touch(mode=0o644, exist_ok=True)
-            self.rotator = RotatingFileHandler(self.logfile, maxBytes=1<<24, backupCount=2)
-        except Exception as e:
-            sys.stderr.write(f"Unable to create or open {self.logfile}")
-            raise e from None
+        self.rotator = RotatingFileHandler(self.logfile, maxBytes=1<<24, backupCount=2)
             
         self.rotator.setLevel(self.level)
         self.rotator.setFormatter(self.formatter)
