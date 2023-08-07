@@ -41,4 +41,4 @@ of all local and global symbols at the time a Exception is raised.
 `urlogger` -- a simple wrapper around the functions in Python's built-in `logging`.
 
 `urpacker` -- a wrapper around the Burrows-Wheeler transform to efficiently compress
-data.
+data. You can read more about it here: https://en.wikipedia.org/wiki/Burrows–Wheeler_transform
