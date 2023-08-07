@@ -181,6 +181,13 @@ class SloppyTree(dict):
     def __str__(self) -> str:
         return self.printable
 
+    ###
+    # All objects derived from dict need these functions if they
+    # are to be pickled or otherwise examined internally.
+    ###
+    def __getstate__(self): return self.__dict__
+
+    def __setstate__(self, d): self.__dict__.update(d)
 
     def leaves(self) -> object:
         """
@@ -200,7 +207,7 @@ class SloppyTree(dict):
         """
         Printing one of these things requires a bit of finesse.
         """
-        return pprint.pformat(self, compact=True, sort_dicts=True, indent=4, width=100)
+        return pprint.pformat(dict(self), compact=True, sort_dicts=True, indent=4, width=100)
 
 
     def traverse(self, with_indicator:bool=True) -> Union[Tuple[object, int], object]:
@@ -297,16 +304,6 @@ if __name__ == "__main__":
     t.a.b.d = 5
     t.a['c'].sixteen = "fred"
 
-    #for v, indicator in t.traverse_modified(0, True):
-    #    print(f"{v}:{indicator}")
-    
-    #print(f"the tree {t.printable}")
-    #for branch in t.as_tuples():
-    #    print(f"{branch}")
-    #for i in t.newPath():
-    #    print("paths", i)
-
-    #print("return the paths", t.paths(t))
     for item in t.find_paths(t):
         print(f"path {item}")
 
@@ -320,7 +317,7 @@ if __name__ == "__main__":
     tt.kingdom["plants"] = "gymnosperms", "angiosperms"
     tt.kingdom["fungi"]
     tt.kingdom.animals.vertebrates.mammals
-    tt.kingdom.animals.vertebrates.mammals = "rodents", "mice", "humsters"
+    tt.kingdom.animals.vertebrates.mammals = "rodents", "mice", "hamsters"
     
 
     tt.kingdom.animals.vertebrates["reptile"] = "snakes", "chameleon"
@@ -328,31 +325,6 @@ if __name__ == "__main__":
     tt.kingdom.animals.invertebrates.mollusks = "oysters"
     tt.kingdom.animals.invertebrates.sponges = "brown", "yellow"
  
-    
-
-
-
-    #print(f"the tree {tt.printable}")
-
-
-    #print(f"__getattr__ {tt.__getattr__('reptile')}") #prints out empty dictionary for some reason
-    #print(f"number of paths {tt.__invert__()}")
-    #print(f"all the nodes {tt.__iter__()}") #prints out the dictionary
-    #print(f"number of nodes {tt.__len__()}") #prints total number of keys and values
-    #tt.__missing__("hello")
-    print(f"the tree {tt.printable}")
-    
-    #for k in tt.leaves():
-    #    print(f"leaves only {k}")
-
-#######test traverse
-    #for v, indicator in tt.traverse():
-    #    print(f"{v}:{indicator}")
-
-    #for branch in tt.as_tuples():
-    #    print(f"{branch}")
-
-    #tt.iterate(tt) prints number of "kids" each node has
 
     print("number of paths", tt.__invert__())
 
