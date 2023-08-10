@@ -259,10 +259,11 @@ class SloppyTree(dict):
                 return True
 
 
-    def find_paths(self, nested_dict, prepath=()):
+    def tree_as_table(self, nested_dict:SloppyTree=None, prepath=()):
         """
         Finds the path from the root to each leaf.
         """
+        if nested_dict is None: nested_dict = self
         for k, v in nested_dict.items():
             path = prepath + (k,)
             #print("the path is here ", path)
@@ -270,7 +271,7 @@ class SloppyTree(dict):
                 if v=={}:
                     yield path
                 else:
-                    yield from self.find_paths(v, path)
+                    yield from self.tree_as_table(v, path)
             else:
                 #### append the value of the leaf based on the key here
                 path=path+(nested_dict.get(k), )
@@ -304,7 +305,7 @@ if __name__ == "__main__":
     t.a.b.d = 5
     t.a['c'].sixteen = "fred"
 
-    for item in t.find_paths(t):
+    for item in t.tree_as_table(t):
         print(f"path {item}")
 
  
@@ -331,6 +332,6 @@ if __name__ == "__main__":
 
 
 
-    for item in tt.find_paths(tt):
+    for item in tt.tree_as_table(tt):
         print(f"path {item}")
 
