@@ -76,7 +76,7 @@ def printvars(f_locals:dict) -> None:
         as_list = [ [k, v] for k, v in f_locals.items() ]
         try:
             print(tabulate(as_list, 
-                headers=['object', 'value'], 
+                headers=['object', 'type', 'value'], 
                 tablefmt='orgtbl'))
 
         except:
@@ -129,7 +129,7 @@ def show_exceptions_and_frames(func:object) -> None:
             # directory.
             candidate_name = os.path.join(new_dir, pid)
             
-            sys.stderr.write(f"writing dump to file {candidate_name}")
+            sys.stderr.write(f"writing dump to file {candidate_name}\n")
 
             with open(candidate_name, 'a') as f:
                 with contextlib.redirect_stdout(f):

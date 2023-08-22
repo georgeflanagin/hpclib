@@ -88,6 +88,62 @@ def all_module_files() -> str:
         yield from all_files_in(location)
 
 
+def append_blob(b:bytes, f:Union[str, object]) -> int:
+    """
+    Appends b to f, and allows f to be an alread open file
+    or a filename. This function does a lock on the file allowing
+    for safe operation in a multi-process/thread environment.
+
+    returns -1 on error or number of bytes written.
+    """
+    try:    
+        f = open(f, 'ab+') if isinstance(f, str) else f
+        fcntl.lockf(f, fcntl.LOCK_EX)
+        return f.write(b)
+    except Exception as e:
+        return -1
+    finally:
+        f.close()
+
+
+def append_pickle(o:object, f:Union[str, object]) -> Union[bool, int]:
+    """
+    Pickles o and appends it to f.
+
+    returns True on success, False on a failure to pickle, and
+        -1 on any IO Error.
+    """
+    try:    
+        f = open(f, 'ab+') if isinstance(f, str) else f
+        fcntl.lockf(f, fcntl.LOCK_EX)
+        pickle.dump(o, f)
+        return True
+    except pickle.PicklingError as e:
+        return False
+    except Exception as e:
+        return -1
+    finally:
+        f.close()
+
+
+def append_text(s:str, f:Union[str, object]) -> int:
+    """
+    Appends s to f, and allows f to be an alread open file
+    or a filename. This function does a lock on the file allowing
+    for safe operation in a multi-process/thread environment.
+
+    returns -1 on error or number of bytes written.
+    """
+    try:    
+        f = open(f, 'a+') if isinstance(f, str) else f
+        fcntl.lockf(f, fcntl.LOCK_EX)
+        return f.write(s)
+    except Exception as e:
+        return -1
+    finally:
+        f.close()
+
+
 ####
 # B
 ####
@@ -192,6 +248,14 @@ def expandall(s:str) -> str:
     """
     return s if s is None else os.path.abspath(os.path.expandvars(os.path.expanduser(s)))
     
+
+def extract_pickle(file_name:str) -> object:
+    with open(file_name, 'rb') as f:
+        while True:
+            try:
+                yield pickle.load(f)
+            except EOFError:
+                break
 
 ####
 # F
