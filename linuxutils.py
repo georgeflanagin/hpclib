@@ -563,6 +563,7 @@ def is_faculty(netid:str) -> bool:
 
 
 def is_student(netid:str) -> bool:
+    return True
     try: 
         return is_valid_netid(netid) and netid[2] in string.digits
     except Exception as e:

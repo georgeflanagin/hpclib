@@ -249,14 +249,19 @@ def expandall(s:str) -> str:
     return s if s is None else os.path.abspath(os.path.expandvars(os.path.expanduser(s)))
     
 
-def extract_pickle(file_name:str) -> object:
-    with open(file_name, 'rb') as f:
+def extract_pickle(f:Union[str,object]) -> object:
+    """
+    A generator to read a file of pickles.
+    """
+    try:
+        f = open(f, 'rb') if isinstance(f, str) else f
         while True:
             try:
                 yield pickle.load(f)
             except EOFError:
                 break
-
+    finally:
+        f.close()
 ####
 # F
 ####
