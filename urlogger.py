@@ -71,7 +71,7 @@ class URLogger:
 
     __values__ = (
         None,
-        logging.Formatter('#%(levelname)-8s [%(asctime)s] (%(process)d) %(module)s: %(message)s'),
+        logging.Formatter('#%(levelname)-8s [%(asctime)s] (%(module)s: %(message)s)'),
         logging.WARNING,
         None,
         None)

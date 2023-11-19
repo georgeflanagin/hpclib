@@ -18,7 +18,7 @@ Usage:
 
         bytes_written = mypipe('message') # writes message to the pipe.
 
-    The reading and writing is no blocking, and select is used to be
+    The reading and writing is non-blocking, and select is used to be
     notified when there is data to be read, so the operation is fairly
     efficient: your reading process goes to sleep and receives a SIGIO
     when there is something in the pipe.

@@ -262,7 +262,6 @@ def extract_pickle(f:Union[str,object]) -> object:
                 break
     finally:
         f.close()
-
 ####
 # F
 ####
