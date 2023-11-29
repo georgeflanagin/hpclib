@@ -1177,7 +1177,7 @@ def version(full:bool = True) -> str:
     """
     try:
         v = subprocess.check_output(
-            ["/opt/rh/rh-git218/root/usr/bin/git", "rev-parse", "--short", "HEAD"],
+            ["git", "rev-parse", "--short", "HEAD"],
             universal_newlines=True
             ).strip()
         if not full: return v
@@ -1185,7 +1185,7 @@ def version(full:bool = True) -> str:
         v = 'unknown'
     else:
         mods = subprocess.check_output(
-            ["/opt/rh/rh-git218/root/usr/bin/git", "status", "--short"],
+            ["git", "status", "--short"],
             universal_newlines=True
             ) 
         if mods.strip() != mods: 
