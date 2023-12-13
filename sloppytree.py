@@ -153,6 +153,15 @@ class SloppyTree(dict):
         return self.traverse
 
 
+    def __bool__(self) -> bool:
+        """
+        When a SloppyTree is evaluated with if, it becomes a boolean.
+        Let's avoid any use of the tree's iterators, and just answer
+        the question, "Is this tree empty?"
+        """
+        return not not len(self.items())
+
+
     def __len__(self) -> int:
         """
         return the number of nodes/branches.
