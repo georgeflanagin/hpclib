@@ -106,7 +106,13 @@ def dorunrun(command:Union[str, list],
                     "stderr":e}
         
     except subprocess.TimeoutExpired as e:
-        raise Exception(f"Process exceeded time limit at {timeout} seconds.")    
+        print(f"Process exceeded time limit at {timeout} seconds.")
+        print(f"Command was {command}")
+        return {"OK":False, 
+                "code":255, 
+                "name":ExitCode(255).name, 
+                "stdout":"", 
+                "stderr":""}
 
     except Exception as e:
         raise Exception(f"Unexpected error: {str(e)}")
