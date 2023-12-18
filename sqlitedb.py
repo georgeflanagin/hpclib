@@ -274,3 +274,22 @@ class SQLiteDB:
        
         results = self.execute_SQL(SQL, parameters)
         return None if not results else results[0]
+
+
+class SQLiteDBinstance:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is not None: return cls._instance
+
+        try:
+            cls._instance = SQLiteDB(args[0], **kwargs)
+            return cls._instance
+        except Exception as e:
+            print(f"{e=} SQLiteDB({args}, {kwargs})")
+            sys.exit(os.EX_IOERR)
+
+        
+            
+
+
