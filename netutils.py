@@ -23,8 +23,8 @@ def get_ssh_host_info(host_name:str=None, config_file:str=None) -> List[Dict]:
 
     if config_file is None:
         config_file = fileutils.expandall("~/.ssh/config")
-        if not os.path.exists(config_file):
-            return [{}]
+    if not os.path.exists(config_file):
+        return [{}]
 
     ###
     # Paramiko does not process Include directives. Let's create a tempfile
