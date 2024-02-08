@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import linuxutils
-
-BashColors = linuxutils.SloppyDict()
+BashColors = {}
 
 BashColors['LIGHT_BLUE']="\033[1;34m"
 BashColors['BLUE']= '\033[94m'
