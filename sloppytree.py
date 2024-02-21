@@ -17,6 +17,7 @@ if sys.version_info < min_py:
 ###
 # Standard imports
 ###
+from collections.abc import Hashable
 import math
 import pprint
 from   functools import reduce
@@ -25,7 +26,7 @@ from   functools import reduce
 __author__ = 'George Flanagin'
 __copyright__ = 'Copyright 2021'
 __credits__ = None
-__version__ = str(math.pi**2)[:5]
+__version__ = 1.2
 __maintainer__ = 'Alina Enikeeva'
 __email__ = ['me+ur@georgeflanagin.com', 'gflanagin@richmond.edu']
 __status__ = 'Teaching example'
@@ -73,9 +74,10 @@ class SloppyDict(dict):
 
     def __setattr__(self, k:str, v:object) -> None:
         """
-        Sets the value to the key in the dictionary.
+        Assign the value as expected.
         """
         self[k] = v
+
 
     def __delattr__(self, k:str) -> None:
         """
@@ -120,6 +122,29 @@ class SloppyTree(dict):
         __missing__ method, and make a new one.
         """
         return self[k]
+
+    def __setattr__(self, k:str, v:object) -> None:
+        """
+        Sets the value to the key, or iterated key. This syntax:
+
+            d[(1, 'c', 6)] = 'value'
+
+        is the same as:
+        
+            d[1]['c'][6] = 'value'
+        """
+        # Typical case, k is the key we want.
+        if isinstance(k, Hashable): 
+            self[k] = v
+
+        elif len(k) == 1:
+            self[k[0]] = v
+            
+        else:
+            for element in k:
+                d = self[element]
+                d[k[1:]] = v
+
 
     def __delattr__(self, k:str) -> None:
         """
@@ -176,13 +201,6 @@ class SloppyTree(dict):
         """
         self[k] = SloppyTree()
         return self[k]
-
-
-    def __setattr__(self, k:str, v:object) -> None:
-        """
-        Assign the value as expected.
-        """
-        self[k] = v
 
 
     def __str__(self) -> str:
@@ -338,7 +356,10 @@ if __name__ == "__main__":
 
 
 
+    for item in tt.tree_as_table(tt):
+        print(f"path {item}")
 
+    tt[('kingdom','animals','vertebrates','mammals')] = 'cat'
     for item in tt.tree_as_table(tt):
         print(f"path {item}")
 
