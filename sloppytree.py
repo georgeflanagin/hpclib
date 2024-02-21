@@ -46,7 +46,7 @@ def deepsloppy(o:dict) -> Union[SloppyDict, object]:
     Multi level slop.
     """
     if isinstance(o, dict): 
-        o = SloppyDict(o)
+        o = SloppyTree(o)
         for k, v in o.items():
             o[k] = deepsloppy(v)
 
@@ -169,7 +169,6 @@ class SloppyTree(dict):
         return sum(1 for _ in (i for i in self.traverse(False)))
 
 
-
     def __missing__(self, k:str) -> object:
         """
         If we reference an element that doesn't exist, we create it,
@@ -177,7 +176,6 @@ class SloppyTree(dict):
         """
         self[k] = SloppyTree()
         return self[k]
-
 
 
     def __setattr__(self, k:str, v:object) -> None:
