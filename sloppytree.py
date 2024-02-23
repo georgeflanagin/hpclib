@@ -123,6 +123,35 @@ class SloppyTree(dict):
         """
         return self[k]
 
+
+    def __setitem__(self, k:str, v:object) -> None:
+        """
+        Sets the value to the key, or iterated key. This syntax:
+
+            d[(1, 'c', 6)] = 'value'
+
+        is the same as:
+        
+            d[1]['c'][6] = 'value'
+        """
+        
+        # Typical case, k is the key we want.
+        if isinstance(k, (str, int)):
+            super().__setitem__(k, v)
+            return
+
+        elif isinstance(k, (list, tuple)): 
+            if len(k) == 1: 
+                self[k[0]] = v
+                return
+            elif len(k) > 1:
+                self[k[0]][k[1:]] = v
+                return
+
+        else:
+            sys.exit(1)
+            
+
     def __setattr__(self, k:str, v:object) -> None:
         """
         Sets the value to the key, or iterated key. This syntax:
@@ -134,7 +163,7 @@ class SloppyTree(dict):
             d[1]['c'][6] = 'value'
         """
         # Typical case, k is the key we want.
-        if isinstance(k, Hashable): 
+        if isinstance(k, str): 
             self[k] = v
 
         elif len(k) == 1:
@@ -325,41 +354,49 @@ class SloppyTree(dict):
 
 if __name__ == "__main__":
     t = SloppyTree()
+
+    print("Adding members with the dot notation")
     t.a.b.c
     t.a.b.c.d = 6
-    t.a.b.d = 5
+    t.a.b.e = 5
     t.a['c'].sixteen = "fred"
 
     for item in t.tree_as_table(t):
         print(f"path {item}")
 
- 
-
-    tt = SloppyTree()
-    tt.kingdom
-    tt.kingdom.animals
-    tt.kingdom.animals.vertebrates
-    tt.kingdom.animals.invertebrates
-    tt.kingdom["plants"] = "gymnosperms", "angiosperms"
-    tt.kingdom["fungi"]
-    tt.kingdom.animals.vertebrates.mammals
-    tt.kingdom.animals.vertebrates.mammals = "rodents", "mice", "hamsters"
-    
-
-    tt.kingdom.animals.vertebrates["reptile"] = "snakes", "chameleon"
-
-    tt.kingdom.animals.invertebrates.mollusks = "oysters"
-    tt.kingdom.animals.invertebrates.sponges = "brown", "yellow"
- 
-
-    print("number of paths", tt.__invert__())
-
-
-
-    for item in tt.tree_as_table(tt):
+    print("Trying compound key")
+    t[('a','b','c','d')] = 7
+    for item in t.tree_as_table(t):
         print(f"path {item}")
 
-    tt[('kingdom','animals','vertebrates','mammals')] = 'cat'
-    for item in tt.tree_as_table(tt):
-        print(f"path {item}")
 
+ 
+
+#    tt = SloppyTree()
+#    tt.kingdom
+#    tt.kingdom.animals
+#    tt.kingdom.animals.vertebrates
+#    tt.kingdom.animals.invertebrates
+#    tt.kingdom["plants"] = "gymnosperms", "angiosperms"
+#    tt.kingdom["fungi"]
+#    tt.kingdom.animals.vertebrates.mammals
+#    tt.kingdom.animals.vertebrates.mammals = "rodents", "mice", "hamsters"
+#    
+#
+#    tt.kingdom.animals.vertebrates["reptile"] = "snakes", "chameleon"
+#
+#    tt.kingdom.animals.invertebrates.mollusks = "oysters"
+#    tt.kingdom.animals.invertebrates.sponges = "brown", "yellow"
+# 
+#
+#    print("number of paths", tt.__invert__())
+#
+#
+#
+#    for item in tt.tree_as_table(tt):
+#        print(f"path {item}")
+#
+#    tt[('kingdom','animals','vertebrates','mammals')] = 'cat'
+#    for item in tt.tree_as_table(tt):
+#        print(f"path {item}")
+#
