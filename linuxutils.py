@@ -51,6 +51,26 @@ __license__ = 'MIT'
 ###
 # B
 ###
+def bookmark() -> list:
+    """
+    Return a list of function calls that arrived at this
+    one. If no information is available, return an empty
+    list.
+
+    bookmark()'s list does not include itself, therefore the
+    range() statement starts at 1 rather than zero. Note that
+    if you are printing the list, you probably don't care
+    about the print() function, so you should 
+
+    print(bookmark()[1:])
+    """
+        
+    stak = inspect.stack()
+    return [ stak[i].function 
+        for i in range(1, len(stak)) 
+        if stak[i].function not in ('wrapper', '<module>') ]
+        
+
 byte_remap = {
     'PB':'P',
     'TB':'T',
