@@ -8,6 +8,7 @@ from typing import *
 import os
 import sys
 
+import hashlib
 import json
 import shlex
 import shutil
@@ -35,16 +36,19 @@ class NIST_Beacon2:
     raises Exception if curl is not available.
     """
 
-    def __init__(self):
+    def __init__(self, secure:bool=False):
         """
         set up the class.
 
-        self.blob -- the full response from our request.
-        self.data -- the random bits.
+        self.secure -- if True, a SHA512 hash of the random data
+            is returned.
+        self.blob   -- the full response from our request.
+        self.data   -- the random bits.
         """
 
-        self.blob = None
-        self.data = None
+        self.blob     = None
+        self.data     = None
+        self.secure   = secure
         self.curl_exe = shutil.which('curl')
         if not self.curl_exe:
             raise Exception('operation not supported in this environment.')
@@ -67,6 +71,12 @@ class NIST_Beacon2:
         
         self.blob = json.loads(result.stdout)
         self.data = self.blob['pulse']['localRandomValue']
+
+        if self.secure:
+            blob=bytes.fromhex(self.data)
+            hasher=hashlib.sha512()
+            hasher.update(blob)
+            self.data = hasher.hexdigest()
 
         return self.data
 
@@ -91,4 +101,8 @@ if __name__ == "__main__":
     beacon = NIST_Beacon2()
     print(beacon())
     print(beacon.msg)     
+    
+    beacon = NIST_Beacon2(True)
+    print(beacon())
+    print(beacon.msg)
 
