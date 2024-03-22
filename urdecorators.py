@@ -28,6 +28,8 @@ import contextlib
 import datetime
 from   functools import wraps
 import inspect
+from   multiprocessing.managers import BaseManager
+import threading
 
 ###
 # An optional import for better printing.
@@ -165,6 +167,60 @@ def show_exceptions_and_frames(func:object) -> None:
 
 # trap = null_decorator
 trap = show_exceptions_and_frames
+
+
+def singleton(cls):
+    """
+    This decorator creates a thread-safe singleton
+    instance of a class. As a class decorator that
+    insures uniqueness, it should precede other
+    decorators.
+
+    Note that this prevents thread races within the same
+    process, but does not affect multiprocessing 
+    environments.
+    """
+    instances = {}
+    lock = threading.Lock()
+    
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            with lock:
+                # Make sure the some other thread did not 
+                # add this class.
+                if cls not in instances:
+                    instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    
+    return get_instance
+
+
+
+class SingletonManager(BaseManager): pass
+
+def multiprocess_singleton(cls):
+    """
+    This decorator uses the multiprocessing module to create
+    a singleton that spans multiple processes. In cases where
+    you need both thread safety and multiprocess safety, wrap
+    the class this way:
+
+    @singleton
+    @multiprocess_singleton
+    class X: 
+        pass
+
+    """
+    def get_instance():
+        m = SingletonManager()
+        m.start()
+        m.register(cls.__name__, cls)
+        instance = getattr(m, cls.__name__)()
+        return instance
+
+    return get_instance
+
+
 
 if __name__=="__main__":
 

@@ -68,7 +68,7 @@ def bookmark() -> list:
     stak = inspect.stack()
     return [ stak[i].function 
         for i in range(1, len(stak)) 
-        if stak[i].function not in ('wrapper', '<module>') ]
+        if stak[i].function not in ('wrapper', '<module>', '__call__') ]
         
 
 byte_remap = {
