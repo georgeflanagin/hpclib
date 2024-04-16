@@ -337,6 +337,29 @@ def get_file_type(path:str) -> str:
 
     return "TXT" if shred.isascii() else None
     
+
+def get_lockfile(lockfile:str) -> bool:
+    """
+    Return whether we are the process that owns the lock.
+    """
+    if not os.path.exists(lockfile):
+        with open(lockfile, 'w') as f:
+            f.write(f"{os.getpid()}")
+            f.close()
+        return True
+
+    else:
+        with open(lockfile, 'r') as f:
+            return f.read().strip() == str(os.getpid())
+
+
+def release_lockfile(lockfile:str) -> bool:
+    try:
+        os.unlink(lockfile)
+        return True
+    except:
+        return False
+    
     
 def got_data(filenames:str) -> bool:
     """
