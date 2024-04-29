@@ -81,6 +81,7 @@ def dorunrun(command:Union[str, list],
     try:
         result = subprocess.run(command, 
             timeout=timeout, 
+            input="",
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE, 
             text=True,
