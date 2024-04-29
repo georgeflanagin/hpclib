@@ -193,7 +193,6 @@ class FIFO:
             # writers to the pipe. So, we reopen and wait.
             if data is None: 
                 sys.stderr.write("waited for Godot.")
-                sys.exit(os.EX_DATAERR)
 
             return data
                 
