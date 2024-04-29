@@ -248,17 +248,17 @@ if __name__ == '__main__':
 
     # we know this source file exists, so let's use it.
     filename = __file__
-    print(dorunrun(f'touch {filename}.new && rm -f {filename}.new', return_datatype=dict))
+    print(dorunrun(f'rm -f {filename}.new', return_datatype=dict))
     print(dorunrun(f'cp {filename} {filename}.new', return_datatype=int))
 
     # most computers are setup so that you can ssh as yourself to localhost. 
     short_filename = os.path.basename(filename)
     print(dorunrun(f"""
-        scp mynetid@localhost:{filename} /tmp/{short_filename}
+        scp {mynetid}@localhost:{filename} /tmp/{short_filename}
         """, 
         return_datatype=dict))
     print(dorunrun(f"""
-        ssh mynetid@localhost 'rm -f /tmp/{filename} && rm -f {short_filename}'
+        ssh -o ConnectTimeout=3 -i ~/.ssh/id_rsa root@alexis "ls -lrt"
         """,
         return_datatype=dict))
     
