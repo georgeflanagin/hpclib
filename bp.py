@@ -45,6 +45,11 @@ import getpass
 import sqlite3
 
 ###
+# Installed imports
+###
+import pandas
+
+###
 # From hpclib
 ###
 import parsec4 
@@ -68,15 +73,16 @@ verbose = False
 ###
 # for the bp parser
 ###
+report = lexeme(string('report'))
 positive_number = lexeme(DIGIT_STR).parsecmap(int)
 systolic = positive_number
 slash = lexeme(string(SLASH))
 diastolic = (slash >> positive_number) ^ positive_number
 pulse = positive_number
-bp_parser = systolic + diastolic + optional(pulse) + everything_else
+bp_parser = report ^ systolic + diastolic + optional(pulse) + everything_else
 
 
-def create_or_open_db(name:str) -> tuple:
+def open_db(name:str) -> tuple:
     """
     As this is a single table database, it is not much trouble to 
     embed all the needed SQL (two statements) into the Python code.
@@ -85,39 +91,14 @@ def create_or_open_db(name:str) -> tuple:
     connection for commit and close, and one to the cursor to 
     manipulate the data.
     """
-    if not os.path.isfile(name):
-
-        db = sqlite3.connect(name)
-        cursor = db.cursor()
-        cursor.execute('''
-            CREATE TABLE facts (
-                user VARCHAR(20), 
-                systolic INTEGER,
-                diastolic INTEGER,
-                pulse INTEGER,
-                arm CHAR(1),
-                t DATETIME DEFAULT CURRENT_TIMESTAMP,
-                narrative VARCHAR(100))
-        ''')
-        cursor.execute('''
-            drop view export;
-            create view export as 
-                select 
-                    datetime(t, 'localtime') as time, 
-                    systolic, diastolic, pulse, 
-                    narrative 
-                from facts order by time;
-        ''')
-        db.close()
-        # Now that it is built, just call this function.
-        return create_or_open_db(name)
-
-    else:
+    try:
         db = sqlite3.connect(name,
-                timeout=5, 
-                isolation_level='EXCLUSIVE')
-
+            timeout=5, 
+            isolation_level='EXCLUSIVE')
         return db, db.cursor()
+
+    except Exception as e:
+        print(f"Database could not be opened. {e=}")
 
 
 def data_to_tuple(data:list) -> tuple:
@@ -128,6 +109,9 @@ def data_to_tuple(data:list) -> tuple:
 
     try:
         data = bp_parser.parse(" ".join(data))
+        if 'report' in data: 
+            return 'report', 0, 0, 0, '', ''
+
     except Exception as e:
         print(e)
         sys.exit(os.EX_DATAERR)
@@ -141,14 +125,15 @@ def data_to_tuple(data:list) -> tuple:
 
 def bp_main(myargs:argparse.Namespace) -> int:
 
-    db, cursor = create_or_open_db(myargs.db)
-    if myargs.data[0] == 'report':
-        for row in cursor.execute('''SELECT * from export''').fetchall():
-            print(row)
-        return os.EX_OK
+    db, cursor = open_db(myargs.db)
 
     data = data_to_tuple(myargs.data)
     try:
+        if data[0] == 'report':
+            frame = pandas.read_sql('''SELECT * from export''', db)
+            frame.to_csv(myargs.output, index=True)
+            return os.EX_OK
+        
         cursor.execute('''INSERT INTO facts 
             (user, systolic, diastolic, pulse, arm, narrative) 
             VALUES (?, ?, ?, ?, ?, ?)''', data)
@@ -156,7 +141,8 @@ def bp_main(myargs:argparse.Namespace) -> int:
         db.commit()
 
     except Exception as e:
-        print(f"Exception writing to database: {e}")
+
+        print(f"Exception writing data: {e}")
         return os.EX_IOERR
 
     finally:
@@ -172,10 +158,12 @@ if __name__ == '__main__':
     parser.add_argument('--db', type=str, 
         default=os.path.join('bp.db'),
         help="Name of the database.")
+    parser.add_argument('-o', '--output', type=str, default=f"{os.path.basename(__file__)[:-3]}.csv",
+        help="Name of the CSV file if asking for a report")
     parser.add_argument('-v', '--verbose', action='store_true',
         help="Be chatty about what is taking place")
     parser.add_argument('data', nargs='+',
-        help="You must supply the systolic/diastolic pressures, heart rate, and optionally a desc. You can also choose to type 'report', and you will get a dump of the previously recorded data.")
+        help="You must supply the systolic/diastolic pressures, optionally a heart rate, and optionally a desc. You can also choose to type 'report', and you will get a dump of the previously recorded data.")
 
     myargs = parser.parse_args()
     verbose = myargs.verbose
