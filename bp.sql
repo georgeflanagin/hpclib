@@ -15,7 +15,6 @@ CREATE VIEW export AS
         DATETIME(t, 'localtime') AS time, 
         systolic, 
         diastolic, 
-        pulse, 
         narrative 
     FROM facts ORDER BY time;
 
