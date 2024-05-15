@@ -70,13 +70,11 @@ def all_files_in(s:str, include_hidden:bool=False) -> str:
             yield s
 
 
-def all_files_like(s:str) -> str:
+def all_files_like(d:str, partial_name:str) -> str:
     """
     A list of all files that match the argument
     """
-    s = expandall(s)
-    yield from ( f for f in all_files_in(os.path.dirname(s)) 
-        if fnmatch.fnmatch(os.path.basename(f), os.path.basename(s)) )
+    yield from ( f for f in all_files_in(d) if partial_name in f )
 
 
 def all_module_files() -> str:
