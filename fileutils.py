@@ -77,6 +77,13 @@ def all_files_like(d:str, partial_name:str) -> str:
     yield from ( f for f in all_files_in(d) if partial_name in f )
 
 
+def all_files_not_like(d:str, partial_name:str) -> str:
+    """
+    A list of all files that do not match the argument
+    """
+    yield from ( f for f in all_files_in(d) if partial_name not in f )
+
+
 def all_module_files() -> str:
     """
     This generator locates all module files that are located in
