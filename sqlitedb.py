@@ -226,12 +226,27 @@ class SQLiteDB:
         to put the dot-notation in the calling code.
         """
         try:
-            with self.lock:
-                self.db.commit()
+            self.db.commit()
             return True
         except:
             return False
 
+    @trap
+    def executemany_SQL(self, SQL:str, datasource:Iterable) -> int:
+        """
+        Wrapper for multiple INSERT and UPDATE statements that provides
+        a correctly constructed transaction/rollback. The datasource 
+        can be a pandas DataFrame if pandas is present.
+
+        returns -- the number of rows affected.
+        """
+        self.conn.execute('BEGIN TRANSACTION;')
+        try:
+            self.conn.executemany(SQL, datasource)
+            self.conn.execute('COMMIT;')
+        except:
+            self.conn.execute('ROLLBACK;')
+            
 
     #@trap
     def execute_SQL(self, SQL:str, *args, **kwargs) -> object:
@@ -258,7 +273,8 @@ class SQLiteDB:
         else:
             rval = self.cursor.execute(SQL)
 
-        if is_select: return rval.fetchall()
+        if is_select: 
+            return rval.fetchall()
         docommit and self.commit()
         return rval
 
@@ -274,22 +290,3 @@ class SQLiteDB:
        
         results = self.execute_SQL(SQL, parameters)
         return None if not results else results[0]
-
-
-class SQLiteDBinstance:
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is not None: return cls._instance
-
-        try:
-            cls._instance = SQLiteDB(args[0], **kwargs)
-            return cls._instance
-        except Exception as e:
-            print(f"{e=} SQLiteDB({args}, {kwargs})")
-            sys.exit(os.EX_IOERR)
-
-        
-            
-
-
