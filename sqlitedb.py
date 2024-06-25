@@ -240,12 +240,12 @@ class SQLiteDB:
 
         returns -- the number of rows affected.
         """
-        self.conn.execute('BEGIN TRANSACTION;')
+        self.cursor.execute('BEGIN TRANSACTION;')
         try:
-            self.conn.executemany(SQL, datasource)
-            self.conn.execute('COMMIT;')
+            self.cursor.executemany(SQL, datasource)
+            self.cursor.execute('COMMIT;')
         except:
-            self.conn.execute('ROLLBACK;')
+            self.cursor.execute('ROLLBACK;')
             
 
     #@trap
