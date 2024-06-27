@@ -240,13 +240,20 @@ class SQLiteDB:
 
         returns -- the number of rows affected.
         """
+
+        if we_have_pandas and isinstance(datasource, pandas.DataFrame):
+            datasource = datasource.itertuples(index=False, name=None)
+
+        i = -1
         self.cursor.execute('BEGIN TRANSACTION;')
         try:
-            self.cursor.executemany(SQL, datasource)
+            i = self.cursor.executemany(SQL, datasource)
             self.cursor.execute('COMMIT;')
         except:
             self.cursor.execute('ROLLBACK;')
-            
+        finally:
+            return i            
+
 
     #@trap
     def execute_SQL(self, SQL:str, *args, **kwargs) -> object:
