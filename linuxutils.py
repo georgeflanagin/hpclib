@@ -15,6 +15,7 @@ import datetime
 import dateutil
 from   dateutil import parser
 import enum
+import fcntl
 import glob
 import grp
 import inspect
