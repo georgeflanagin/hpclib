@@ -409,11 +409,26 @@ def iso_seconds(timestring:str) -> int:
 # L
 ###
 class LockFile:
+    """
+    Simple class using a context manager to provide a semaphore
+    locking strategy.
+
+    Usage:
+
+    try:
+        with LockFile(lockfile_name) as lock:
+            blah blah blah
+    except:
+        print(f"Already locked by {int(lock)}")
+
+    """
+
     def __init__(self, lockfile_name:str):
         self.lockfile_name = lockfile_name
         self.lockfile = None
 
-    def acquire_lock(self):
+
+    def __enter__(self):
         self.lockfile = open(self.lockfile_name, 'w')
         try:
             fcntl.flock(self.lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -421,16 +436,33 @@ class LockFile:
             self.lockfile.flush()
 
         except IOError:
+            self.lockfile.close()
             raise RuntimeError("Another instance is already running.")
 
+        return self
 
-    def release_lock(self):
+
+    def __exit__(self, exception_type:type, exception_value:object, traceback:object) -> bool:
         try:
             fcntl.flock(self.fp, fcntl.LOCK_UN)
 
         finally:
             self.lockfile.close()
             os.unlink(self.lockfile_name)
+            
+
+    def __int__(self) -> int:
+        try:
+            self.lockfile = open(self.lockfile_name)
+            the_pid = int(self.lockfile.read().strip())
+            self.lockfile.close()
+            return the_pid
+
+        except:
+            # This really should not happen ...
+            return -1
+
+
 ####
 # M
 ####
