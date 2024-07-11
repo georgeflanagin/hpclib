@@ -445,10 +445,10 @@ class LockFile:
 
     def __exit__(self, exception_type:type, exception_value:object, traceback:object) -> bool:
         try:
-            fcntl.flock(self.fp, fcntl.LOCK_UN)
+            fcntl.flock(self.lockfile, fcntl.LOCK_UN)
+            self.lockfile.close()
 
         finally:
-            self.lockfile.close()
             os.unlink(self.lockfile_name)
             
 
