@@ -436,7 +436,7 @@ class LockFile:
             self.lockfile.write(str(os.getpid()))
             self.lockfile.flush()
 
-        except IOError:
+        except (BlockingIOError, IOError):
             self.lockfile.close()
             raise RuntimeError("Another instance is already running.")
 
