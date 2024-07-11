@@ -405,6 +405,32 @@ def iso_seconds(timestring:str) -> int:
     dt = datetime.datetime.strptime(timestring, '%Y-%m-%dT%H:%M')
     return dt.strftime("%s")
 
+###
+# L
+###
+class LockFile:
+    def __init__(self, lockfile_name:str):
+        self.lockfile_name = lockfile_name
+        self.lockfile = None
+
+    def acquire_lock(self):
+        self.lockfile = open(self.lockfile_name, 'w')
+        try:
+            fcntl.flock(self.lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.lockfile.write(str(os.getpid()))
+            self.lockfile.flush()
+
+        except IOError:
+            raise RuntimeError("Another instance is already running.")
+
+
+    def release_lock(self):
+        try:
+            fcntl.flock(self.fp, fcntl.LOCK_UN)
+
+        finally:
+            self.lockfile.close()
+            os.unlink(self.lockfile_name)
 ####
 # M
 ####
