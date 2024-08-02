@@ -152,7 +152,7 @@ class SloppyTree(dict):
             sys.exit(1)
             
 
-    def __call__(self, ks:str) -> object:
+    def __call__(self, key_as_str:str) -> object:
         """
         Allow for retrieval of a nested key by a string
         that represents its name. Essentially this:
@@ -160,7 +160,9 @@ class SloppyTree(dict):
         t("a.b.c") means t[a][b][c]
         """
         ptr = self
-        for k in ks.split('.'):
+        for k in key_as_str.split('.'):
+            if k not in ptr:
+                raise AttributeError(f"{k=} not found in sub-tree {ptr=}")
             ptr = v = ptr[k]
         return v
 
