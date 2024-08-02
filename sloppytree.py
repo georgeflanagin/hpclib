@@ -152,6 +152,19 @@ class SloppyTree(dict):
             sys.exit(1)
             
 
+    def __call__(self, ks:str) -> object:
+        """
+        Allow for retrieval of a nested key by a string
+        that represents its name. Essentially this:
+
+        t("a.b.c") means t[a][b][c]
+        """
+        ptr = self
+        for k in ks.split('.'):
+            ptr = v = ptr[k]
+        return v
+
+
     def __setattr__(self, k:str, v:object) -> None:
         """
         Sets the value to the key, or iterated key. This syntax:
