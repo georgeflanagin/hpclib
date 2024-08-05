@@ -16,7 +16,7 @@ import subprocess
 
 # Credits
 __author__ = 'George Flanagin'
-__copyright__ = 'Copyright 2020, University of Richmond'
+__copyright__ = 'Copyright 2024, University of Richmond'
 __version__ = 2.0
 __maintainer__ = 'George Flanagin'
 __email__ = 'gflanagin@richmond.edu'
