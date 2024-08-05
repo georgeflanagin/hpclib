@@ -45,6 +45,7 @@ def dorunrun(command:Union[str, list],
     """
     A wrapper around (almost) all the complexities of running child 
         processes.
+
     command -- a string, or a list of strings, that constitute the
         commonsense definition of the command to be attemped. 
     timeout -- generally, we don't

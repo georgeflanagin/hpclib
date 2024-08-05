@@ -723,11 +723,11 @@ def splitter(group:Iterable, num_chunks:int) -> Iterable:
 
 
 def squeal(s: str=None, rectus: bool=True, source=None) -> str:
-    """ The safety pig will appear when there is trouble. """
+    """ The safety goat will appear when there is trouble. """
     tombstone(str)
     return
 
-    for raster in pig:
+    for raster in goat:
         if not rectus:
             print(raster.replace(RED, "").replace(LIGHT_BLUE, "").replace(REVERT, ""))
         else:
