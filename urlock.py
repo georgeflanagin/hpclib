@@ -62,7 +62,7 @@ class URLock:
     """
 
     __slots__    = ('progname', 'dirname', 'lockfilename', 'pid', 'lock_now')
-    __values__   = (None, os.getcwd(), None, str(os.getpid()), True)
+    __values__   = (None, os.getcwd(), None, None, True)
     __defaults__ = dict(zip(__slots__, __values__))
 
     def __init__(self, **kwargs):
@@ -74,6 +74,8 @@ class URLock:
         for k, v in kwargs.items(): 
             if k in URLock.__slots__:
                 setattr(self, k, v)
+        self.pid = str(os.getpid())
+
         try:
             self.lockfilename = os.path.join(self.dirname, self.progname) + ".lock"
         except Exception as e:
@@ -89,9 +91,7 @@ class URLock:
         Return whether the pid in the lock file is our own.
         """
         
-        with open(self.lockfilename) as f:
-            return f.read().strip() == self.pid
-
+        return self.locked_by == self.pid
 
 
     def lock(self) -> bool:
@@ -114,6 +114,14 @@ class URLock:
         return bool(self)
 
 
+    @property
+    def locked_by(self) -> str:
+        """
+        Return the pid of the locker.
+        """
+        with open(self.lockfilename) as f:
+            return f.read().strip()
+
                     
     def release(self) -> bool:
         """
@@ -121,6 +129,7 @@ class URLock:
         """
         try:
             os.unlink(self.lockfilename)
+            return True
         except FileNotFoundError as e:
             return True
         except Exception as e:
@@ -131,6 +140,41 @@ class URLock:
 
 @trap
 def urlock_main(myargs:argparse.Namespace) -> int:
+    global progname
+
+    ###
+    # Create an example.
+    ###
+    locker = URLock(progname=progname)
+
+    ###
+    # Create another process, and try to lock. It 
+    # should fail.
+    ###
+
+    child = os.fork()
+    if child:
+        child_pid, status, _ = os.wait3(0)
+
+    else:
+        child_locker = URLock(progname=progname)
+        if child_locker:
+            print(f"Oddly the child {child_locker.pid} was able to take over the lock from {child_locker.locked_by}!")
+        else:
+            print("As expected, the child could not take the lock.")
+        os._exit(0)
+
+    if locker:
+        print("Locker tests True")
+        if locker.release():
+            print("Lock was successfully released.")
+
+    else:
+        print("Locker tests False")
+
+    # Test the synonym.    
+    print(f"{locker.unlock()=}")
+
     return os.EX_OK
 
 
@@ -153,7 +197,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
     
-    parser.add_argument('-z', '--zap', type='store_true', 
+    parser.add_argument('-z', '--zap', action='store_true', 
         help="Remove old log file and create a new one.")
 
     myargs = parser.parse_args()
