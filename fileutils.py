@@ -1,36 +1,71 @@
 # -*- coding: utf-8 -*-
-""" Generic, bare functions, not a part of any object or service. """
-
-# Added for Python 3.5+
 import typing
-from typing import *
+from   typing import *
 
+###
+# Standard imports, starting with os and sys
+###
+min_py = (3, 11)
+import os
+import sys
+if sys.version_info < min_py:
+    print(f"This program requires Python {min_py[0]}.{min_py[1]}, or higher.")
+    sys.exit(os.EX_SOFTWARE)
+
+###
+# Other standard distro imports
+###
+import argparse
+from   collections.abc import *
+import contextlib
+import getpass
+import logging
+
+###
+# Installed libraries like numpy, pandas, paramiko
+###
+
+###
+# From hpclib
+###
+import linuxutils
+from   urdecorators import trap
+from   urlogger import URLogger
+
+###
+# imports and objects that were written for this project.
+###
 import base64
 import calendar
 import fnmatch
 import getpass
 import glob
 import os
-import random
+import random 
 import resource
 import re
 import stat
 import subprocess
 import sys
 import tempfile
-    
+###
+# Global objects
+###
+mynetid = getpass.getuser()
+logger = None
+
+###
 # Credits
-__longname__ = "University of Richmond"
-__acronym__ = " UR "
+###
 __author__ = 'George Flanagin'
-__copyright__ = 'Copyright 2015, University of Richmond'
+__copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
-__version__ = '0.1'
+__version__ = 0.1
 __maintainer__ = 'George Flanagin'
 __email__ = 'gflanagin@richmond.edu'
-__status__ = 'Prototype'
-
+__status__ = 'in progress'
 __license__ = 'MIT'
+
 
 LIGHT_BLUE="\033[1;34m"
 BLUE = '\033[94m'
@@ -51,7 +86,7 @@ def all_dirs_in(s:str, depth:int=0) -> str:
     one given as the first parameter.
     """
     s = expandall(s)
-    if depth==1: 
+    if depth==1:
         return next(os.walk(s))[1]
     else:
         return [t[0] for t in os.walk(s)]
@@ -101,7 +136,7 @@ def append_blob(b:bytes, f:Union[str, object]) -> int:
 
     returns -1 on error or number of bytes written.
     """
-    try:    
+    try:
         f = open(f, 'ab+') if isinstance(f, str) else f
         fcntl.lockf(f, fcntl.LOCK_EX)
         return f.write(b)
@@ -118,7 +153,7 @@ def append_pickle(o:object, f:Union[str, object]) -> Union[bool, int]:
     returns True on success, False on a failure to pickle, and
         -1 on any IO Error.
     """
-    try:    
+    try:
         f = open(f, 'ab+') if isinstance(f, str) else f
         fcntl.lockf(f, fcntl.LOCK_EX)
         pickle.dump(o, f)
@@ -139,7 +174,7 @@ def append_text(s:str, f:Union[str, object]) -> int:
 
     returns -1 on error or number of bytes written.
     """
-    try:    
+    try:
         f = open(f, 'a+') if isinstance(f, str) else f
         fcntl.lockf(f, fcntl.LOCK_EX)
         return f.write(s)
@@ -164,7 +199,7 @@ def build_file_list(f:str) -> List[str]:
     returns -- a possibly empty list of file names.
     """
     return glob.glob(file_name_filter(f))
-    
+
 
 ####
 # C
@@ -174,85 +209,17 @@ def build_file_list(f:str) -> List[str]:
 # D
 ####
 
-def date_filter(filename:str, *, 
-    year:str="YYYY", 
-    year_contracted:str="Y?",
-    month:str="MM", 
-    month_contracted:str="M?",
-    month_name:str="bbb",
-    week_number:str="WW",
-    day:str="DD",
-    day_contracted:str="D?",
-    hour:str="hh",
-    minute:str="mm",
-    second:str="ss",
-    date_offset:int=0) -> str:
-    """
-    Remove placeholders from a filename and use today's date (with
-    an optional offset).
-
-    NOTE: all the placeholders are non-numeric, and all the replacements 
-        are digits. Thus the function works because the two are disjoint
-        sets. Break that .. and the function doesn't work.
-    """
-    if not isinstance(filename, str): return filename
-
-    #Return unmodified file name if there isn't at least one set of format delimiters "{" and "}"
-    if not re.match(".*?\{.*?\}.*?", filename):
-        return filename
-
-    today = crontuple_now() + datetime.timedelta(days=date_offset)
-
-    # And now ... for Petrarch's Sonnet 47
-    this_year = str(today.year)
-    this_year_contracted = this_year[2:]
-    this_month_name = calendar.month_abbr[today.month].upper()
-    this_month = str('%02d' % today.month)
-    this_month_contracted = this_month if this_month[0] == '1' else this_month[1]
-    this_week = str('%02d' % datetime.date.today().isocalendar()[1])
-    this_day =  str('%02d' % today.day)
-    this_day_contracted = this_day if this_day[0] != '0' else this_day[1]
-    this_hour = str('%02d' % today.hour)
-    this_minute = str('%02d' % today.minute)
-    this_second = str('%02d' % today.second)
-
-    #Initialize new_filename so we can use it later
-    new_filename = filename
-    
-    #Iterate through each pair of "{" and "}" in filename and replace placeholder values
-    #with date literals
-    for date_exp in [ m.group(0) for m in re.finditer("\{.*?\}",filename) ]:
-        #Start with the sliced substring excluding the "{" and "}" charactes and
-        #begin replacing pattern date strings with literals
-        new_name = date_exp[1:-1].replace(year, this_year)
-        new_name = new_name.replace(year_contracted, this_year_contracted)
-        new_name = new_name.replace(month_name, this_month_name)
-        new_name = new_name.replace(month, this_month)
-        new_name = new_name.replace(month_contracted, this_month_contracted)
-        new_name = new_name.replace(week_number, this_week)
-        new_name = new_name.replace(day, this_day)
-        new_name = new_name.replace(day_contracted, this_day_contracted)
-        new_name = new_name.replace(hour, this_hour)
-        new_name = new_name.replace(minute, this_minute)
-        new_name = new_name.replace(second, this_second)
-        #Now replace the original string including the "{" and "}" with the translated string
-        new_filename = new_filename.replace(date_exp,new_name)
-
-    #Return result and strip { and } format containers
-    return new_filename
-
-
 ####
 # E
 ####
 
 def expandall(s:str) -> str:
     """
-    Expand all the user vars into an absolute path name. If the 
+    Expand all the user vars into an absolute path name. If the
     argument happens to be None, it is OK.
     """
-    return s if s is None else os.path.abspath(os.path.expandvars(os.path.expanduser(s)))
-    
+    return s if s is None else os.path.realpath(os.path.abspath(os.path.expandvars(os.path.expanduser(s))))
+
 
 def extract_pickle(f:Union[str,object]) -> object:
     """
@@ -267,6 +234,7 @@ def extract_pickle(f:Union[str,object]) -> object:
                 break
     finally:
         f.close()
+
 ####
 # F
 ####
@@ -290,7 +258,7 @@ def file_name_filter(filename:str, env:str='.') -> str:
     """
     filename = expandall(date_filter(filename))
 
-    if not filename.startswith(os.sep): 
+    if not filename.startswith(os.sep):
         filename = os.path.join(env, filename)
 
     return filename
@@ -300,7 +268,7 @@ def file_name_filter(filename:str, env:str='.') -> str:
 # G
 ####
 
-def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str: 
+def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str:
     """
     Returns the first num_bytes of a file as a tuple of hex strings
 
@@ -321,16 +289,17 @@ filetypes = {
     bytes.fromhex("504B0708") : "ZIP"
     }
 
+
 def get_file_type(path:str) -> str:
     """
-    By inspection, return the presumed type of the file located 
+    By inspection, return the presumed type of the file located
     at path. Returns a three of four char file type, or None if
     the type cannot be determined. This might be because the
-    type cannot be determined when inspected, or because it cannot 
-    be opened. 
+    type cannot be determined when inspected, or because it cannot
+    be opened.
     """
     global filetypes
-    
+
     try:
         with open(expandall(path), 'rb') as f:
             shred = f.read(256)
@@ -341,7 +310,8 @@ def get_file_type(path:str) -> str:
         if shred.startswith(k): return v
 
     return "TXT" if shred.isascii() else None
-    
+
+
 
 def get_lockfile(lockfile:str) -> bool:
     """
@@ -364,8 +334,7 @@ def release_lockfile(lockfile:str) -> bool:
         return True
     except:
         return False
-    
-    
+
 def got_data(filenames:str) -> bool:
     """
     Return True if the file or files all are non-empty, False otherwise.
@@ -378,6 +347,7 @@ def got_data(filenames:str) -> bool:
         result = result and bool(os.path.isfile(_)) and bool(os.stat(_).st_size)
     return result
 
+
 ####
 # H
 ####
@@ -388,7 +358,7 @@ def home_and_away(filename:str) -> str:
     files like filename are found in any of the locations.
 
     It has the benefit that unless nothing is found, it returns the
-    filename fully qualified. 
+    filename fully qualified.
     """
 
     if filename.startswith(os.sep): return filename
@@ -465,7 +435,7 @@ def lines_in_file(filename:str) -> int:
         return -2
     else:
         return count
-    
+
 
 ####
 # M
@@ -473,7 +443,7 @@ def lines_in_file(filename:str) -> int:
 
 def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
     """
-    Do our best to make the given directory (and any required 
+    Do our best to make the given directory (and any required
     directories upstream). If we cannot, then die trying.
     """
 
@@ -484,7 +454,7 @@ def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
 
     except FileExistsError as e:
         # It's already there.
-        if not os.path.isdir(dirname): 
+        if not os.path.isdir(dirname):
             raise NotADirectoryError('{} is not a directory.'.format(dirname)) from None
             sys.exit(os.EX_IOERR)
 
@@ -496,6 +466,7 @@ def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
 
     if (os.stat(dirname).st_mode & 0o777) < mode:
         tombstone("Permissions on " + dirname + " less than requested.")
+
 
 
 ####
@@ -526,7 +497,7 @@ def path_join(dir_part:str, file_part:str) -> str:
     dir_part = os.path.expandvars(os.path.expanduser(dir_part))
     file_part = os.path.expandvars(os.path.expanduser(file_part))
     return os.path.join(dir_part, file_part)
- 
+
 
 ###
 # Q
@@ -546,7 +517,7 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
     break_on -- For some testing, perhaps you want a file of "lines."
 
     returns -- a tuple of file_name and size.
-    """    
+    """
     f_name = None
     num_written = -1
 
@@ -556,7 +527,7 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
 
     if break_on is not None:
         if isinstance(break_on, str): break_on = break_on.encode('utf-8')
-        s = s.replace(break_on, b'\n')    
+        s = s.replace(break_on, b'\n')
 
     try:
         f_no, f_name = tempfile.mkstemp(suffix='.txt', prefix=name_prefix)
@@ -566,14 +537,12 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
         tombstone(str(e))
     
     return f_name, num_written
-    
-
 
 def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> str:
     """
-    
+
     """
-    
+
     s = base64.b64encode(os.urandom(length*2))
     if want_bytes: return s[:length]
 
@@ -586,7 +555,7 @@ def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> 
 
 def read_whitespace_file(filename:str) -> tuple:
     """
-    This is a generator that returns the whitespace delimited tokens 
+    This is a generator that returns the whitespace delimited tokens
     in a text file, one token at a time.
     """
     if not filename: return tuple()
@@ -597,12 +566,5 @@ def read_whitespace_file(filename:str) -> tuple:
 
     f = open(filename)
     yield from (" ".join(f.read().split('\n'))).split()
-    
 
-####
-# S
-####
 
-####
-# T U V W X Y Z
-####
