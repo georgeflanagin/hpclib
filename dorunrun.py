@@ -52,8 +52,8 @@ __author__ = 'George Flanagin'
 __copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
 __version__ = 0.1
-__maintainer__ = 'George Flanagin'
-__email__ = f'gflanagin@richmond.edu'
+__maintainer__ = 'George Flanagin, Skyler He'
+__email__ = 'gflanagin@richmond.edu, skyler.he@richmond.edu'
 __status__ = 'in progress'
 __license__ = 'MIT'
 

@@ -37,17 +37,19 @@ from   urlogger import URLogger
 ###
 import base64
 import calendar
+import fcntl
 import fnmatch
 import getpass
 import glob
-import os
-import random 
-import resource
+import pickle
+import random
 import re
+import resource
 import stat
 import subprocess
 import sys
 import tempfile
+
 ###
 # Global objects
 ###
@@ -61,21 +63,12 @@ __author__ = 'George Flanagin'
 __copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
 __version__ = 0.1
-__maintainer__ = 'George Flanagin'
-__email__ = 'gflanagin@richmond.edu'
+__maintainer__ = 'George Flanagin, Skyler He'
+__email__ = 'gflanagin@richmond.edu, Skyler He'
 __status__ = 'in progress'
 __license__ = 'MIT'
 
 
-LIGHT_BLUE="\033[1;34m"
-BLUE = '\033[94m'
-RED = '\033[91m'
-YELLOW = '\033[1;33m'
-REVERSE = "\033[7m"
-REVERT = "\033[0m"
-GREEN="\033[0;32m"
-
-LOCK_NONE = 0
 
 ####
 # A
@@ -202,7 +195,7 @@ def build_file_list(f:str) -> List[str]:
 
 
 ####
-# C
+# C 
 ####
 
 ####
@@ -245,24 +238,6 @@ def fclose_all() -> None:
             os.close(i)
         except:
             continue
-
-
-def file_name_filter(filename:str, env:str='.') -> str:
-    """
-    Modify the filename in the following ways, and in this order:
-
-    1. Apply the date filtering.
-    2. Expand any environment variables or directory shorthand.
-    3. Join the environment if the name does not start with an
-        absolute path.
-    """
-    filename = expandall(date_filter(filename))
-
-    if not filename.startswith(os.sep):
-        filename = os.path.join(env, filename)
-
-    return filename
-
 
 ####
 # G
@@ -313,29 +288,7 @@ def get_file_type(path:str) -> str:
 
 
 
-def get_lockfile(lockfile:str) -> bool:
-    """
-    Return whether we are the process that owns the lock.
-    """
-    if not os.path.exists(lockfile):
-        with open(lockfile, 'w') as f:
-            f.write(f"{os.getpid()}")
-            f.close()
-        return True
-
-    else:
-        with open(lockfile, 'r') as f:
-            return f.read().strip() == str(os.getpid())
-
-
-def release_lockfile(lockfile:str) -> bool:
-    try:
-        os.unlink(lockfile)
-        return True
-    except:
-        return False
-
-def got_data(filenames:str) -> bool:
+def got_data(filenames:Iterable) -> bool:
     """
     Return True if the file or files all are non-empty, False otherwise.
     """
@@ -553,7 +506,7 @@ def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> 
     return t
 
 
-def read_whitespace_file(filename:str) -> tuple:
+def read_whitespace_file(filename:str, *, comment_char:str=None) -> tuple:
     """
     This is a generator that returns the whitespace delimited tokens
     in a text file, one token at a time.
@@ -564,7 +517,20 @@ def read_whitespace_file(filename:str) -> tuple:
         sys.stderr.write(f"{filename} cannot be found.")
         return os.EX_NOINPUT
 
-    f = open(filename)
-    yield from (" ".join(f.read().split('\n'))).split()
-
-
+    with open(filename) as f:
+        if comment_char is None:
+            yield from (" ".join(f.read().split('\n'))).split()
+    
+        else:
+            print("Reading with comment filtering...")
+            lines = f.readlines()
+            for l in lines:
+                stripped_line = l.strip()
+                print(f"Processing line: {stripped_line}")
+                if not stripped_line.startswith(comment_char):
+                    for token in stripped_line.split():
+                        yield token
+            # yield from (token for l in lines if not l.strip().startswith(comment_char) for token in l.split())
+####
+#S T U V W X Y Z
+####
