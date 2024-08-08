@@ -64,7 +64,7 @@ __copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
 __version__ = 0.1
 __maintainer__ = 'George Flanagin, Skyler He'
-__email__ = 'gflanagin@richmond.edu, Skyler He'
+__email__ = 'gflanagin@richmond.edu, skyler.he@richmond.edu'
 __status__ = 'in progress'
 __license__ = 'MIT'
 
@@ -253,6 +253,8 @@ def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str:
     with open(path,'rb') as z:
         return z.read(num_bytes)
 
+
+
 filetypes = {
     b"%PDF-1." : "PDF",
     b"#%Module" : "MOD",
@@ -294,7 +296,7 @@ def got_data(filenames:Iterable) -> bool:
     """
     if filenames is None or not len(filenames): return False
 
-    filenames = listify(filenames)
+    filenames = filename if isinstance(filename,list) else [filename]
     result = True
     for _ in filenames:
         result = result and bool(os.path.isfile(_)) and bool(os.stat(_).st_size)
