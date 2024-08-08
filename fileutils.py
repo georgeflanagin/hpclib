@@ -181,17 +181,6 @@ def append_text(s:str, f:Union[str, object]) -> int:
 # B
 ####
 
-def build_file_list(f:str) -> List[str]:
-    """
-    Resolve all the symbolic names that might be embedded in the filespec,
-    and return a list of all the files that match it **at the time the
-    function is called.**
-
-    f -- a file name "spec."
-
-    returns -- a possibly empty list of file names.
-    """
-    return glob.glob(file_name_filter(f))
 
 
 ####
@@ -296,7 +285,7 @@ def got_data(filenames:Iterable) -> bool:
     """
     if filenames is None or not len(filenames): return False
 
-    filenames = filename if isinstance(filename,list) else [filename]
+    filenames = filenames if isinstance(filenames, list) else [filenames]
     result = True
     for _ in filenames:
         result = result and bool(os.path.isfile(_)) and bool(os.stat(_).st_size)
@@ -354,7 +343,7 @@ def is_PDF(o:Union[bytes,str]) -> bool:
     shred = None
     if isinstance(o, str):
         with open(o) as f:
-            shred = bytes(f.readline()[:7])
+            shred = bytes(f.readline()[:7]).encode("UTF-8")
     else:
         shred = o[:7]
     return shred == b'%PDF-1.'
