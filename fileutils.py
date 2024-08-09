@@ -484,6 +484,17 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
 
 def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> str:
     """
+    Generates a random string or byte sequence of the specified length.
+
+    Parameters:
+    length (int): The desired length of the output string or byte sequence. Default is 10.
+    want_bytes (bool): If True, returns the result as a bytes object. If False, returns a string. Default is False.
+    all_alpha (bool): If True, ensures the resulting string consists only of alphabetic characters (a-z, A-Z).
+                      If False, the resulting string may include non-alphabetic characters. Default is True.
+
+    Returns:
+    str: A random string of the specified length if `want_bytes` is False.
+    bytes: A random byte sequence of the specified length if `want_bytes` is True.
 
     """
 
@@ -513,15 +524,8 @@ def read_whitespace_file(filename:str, *, comment_char:str=None) -> tuple:
             yield from (" ".join(f.read().split('\n'))).split()
     
         else:
-            print("Reading with comment filtering...")
             lines = f.readlines()
-            for l in lines:
-                stripped_line = l.strip()
-                print(f"Processing line: {stripped_line}")
-                if not stripped_line.startswith(comment_char):
-                    for token in stripped_line.split():
-                        yield token
-            # yield from (token for l in lines if not l.strip().startswith(comment_char) for token in l.split())
+            yield from (token for l in lines if not l.strip().startswith(comment_char) for token in l.split())
 ####
 #S T U V W X Y Z
 ####
