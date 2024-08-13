@@ -342,8 +342,8 @@ def is_PDF(o:Union[bytes,str]) -> bool:
 
     shred = None
     if isinstance(o, str):
-        with open(o) as f:
-            shred = bytes(f.readline()[:7]).encode("UTF-8")
+        with open(o, "rb") as f:
+            shred = f.read(7)
     else:
         shred = o[:7]
     return shred == b'%PDF-1.'
@@ -466,7 +466,6 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
     num_written = -1
 
     file_size = length if length is not None else random.choice(range(0, 1<<20))
-    fcn_signature('random_string', file_size)
     s = random_string(file_size, True)
 
     if break_on is not None:
