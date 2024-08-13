@@ -51,7 +51,7 @@ __copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
 __version__ = 0.1
 __maintainer__ = 'George Flanagin'
-__email__ = f'gflanagin@richmond.edu'
+__email__ = 'gflanagin@richmond.edu'
 __status__ = 'in progress'
 __license__ = 'MIT'
 

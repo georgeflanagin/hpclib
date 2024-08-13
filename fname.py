@@ -333,7 +333,6 @@ class Fname:
             except:
                 pass
 
-    @property
     def directory(self, terminated:bool=False) -> str:
         """
         returns: -- The directory part of the name.
@@ -350,13 +349,35 @@ class Fname:
     @property
     def empty(self) -> bool:
         """
-        Check if the file is absent, inaccessible, or short and
-        containing only whitespace.
+        Check if the file is absent, inaccessible, or short and containing only whitespace.
+        Return:
+            -- True if the file is short and containing only whitespace
+            -- False otherwise
+            -- Error if the file is absent, inaccessible(no read permission) or else
         """
         try:
-            return len(self) < 3 or not len(f().strip())
-        except:
-            return False
+            # Check if the file exists and is accessible
+            if not os.path.isfile(self._fqn):
+                print(f"File '{self._fqn}' does not exist.")
+                return True
+        
+            # Check if the file is readable
+            if not os.access(self._fqn, os.R_OK):
+                print(f"File '{self._fqn}' is not accessible (no read permission).")
+                return True
+        
+            # Check if the file is short (less than 3 bytes) or only contains whitespace
+            with open(self._fqn, 'r') as f:
+                return len(f.read()) < 3 or not f.read().strip()
+    
+        except FileNotFoundError:
+            return (f"File '{self._fqn}' not found.")
+
+        except PermissionError:
+            return (f"File '{self._fqn}' cannot be accessed due to permission issues.")
+
+        except Exception as e:
+            return (f"An unexpected error occurred: {e}")
 
 
     @property
@@ -401,16 +422,28 @@ class Fname:
 
     @property
     def edge_hash(self) -> str:
+        """
+        Return the hash of the file's content. Initializes the hasher using xxhash first; 
+        if unavailable, falls back to SHA-1. The hash is cached after the first computation.
+        """
         if self._edge_hash:
             return self._edge_hash
-        hasher = hashlib.sha1()
         try:
+            # Initialize hasher (use xxhash if available, otherwise fallback to SHA-1)
+            try:
+                import xxhash
+                hasher = xxhash.xxh64()
+            except ImportError:
+                hasher = hashlib.sha1()
+            
             with open(str(self), 'rb') as f:
-                hasher.update(f.read(io.DEFAULT_BUFFER_SIZE))
-        except Exception as e:
-            return '00000000000000'
+                 hasher.update(f.read(io.DEFAULT_BUFFER_SIZE))
+            
+            self._edge_hash = hasher.hexdigest()
+        
+        except Exception as e:   
+            return e
 
-        self._edge_hash = hasher.hexdigest()
         return self._edge_hash
 
 
@@ -423,18 +456,21 @@ class Fname:
         if self._content_hash:
             return self._content_hash
 
-        hasher = hashlib.sha1()
-
         try:
+            # Initialize the hasher using xxhash first, fallback to SHA-1 if xxhash is not available
+            try:
+                import xxhash
+                hasher = xxhash.xxh64()
+            except ImportError:
+                hasher = hashlib.sha1()
+            
             with open(str(self), 'rb') as f:
-                while True:
-                    segment = f.read(Fname.BUFSIZE)
-                    if not segment: break
-                    hasher.update(segment)
+                _ = [hasher.update(chunk) for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b'')]
+            
+            self._content_hash = hasher.hexdigest()
+
         except:
             self._content_hash = '0000000000000000'
-        else:
-            self._content_hash = hasher.hexdigest()
 
         return self._content_hash
 
@@ -509,6 +545,8 @@ class Fname:
         else:
             return True
         finally:
+            if self._lock_handle:
+                os.close(self._lock_handle)
             self._lock_handle = None
 
 

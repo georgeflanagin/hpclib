@@ -135,11 +135,17 @@ def byte_scale(i:int, key:str='X') -> str:
             return f"Error: byte_scale({i}, {k})"
 
 def bytes2human(n:int) -> str:
-    # http://code.activestate.com/recipes/578019
-    # >>> bytes2human(10000)
-    # '9.8K'
-    # >>> bytes2human(100001221)
-    # '95.4M'
+    """
+    Convert a byte count to a human-readable format (e.g., KB, MB, GB).     Returns the formatted string.
+    
+    Examples: 
+        http://code.activestate.com/recipes/578019
+        bytes2human(10000)
+        '9.8K'
+        bytes2human(100001221)
+        '95.4M'
+    """
+
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
@@ -216,6 +222,10 @@ def columns() -> int:
 # There is no standard way to do this, particularly with virtualization.
 ###
 def cpucounter() -> int:
+    """
+    Return the number of CPU cores available on the current system, 
+    based on the operating system.
+    """
     names = {
         'macOS': lambda : os.cpu_count(),
         'Linux': lambda : len(os.sched_getaffinity(0)),
@@ -297,6 +307,7 @@ def explain(code:int) -> str:
 
 def getallgroups():
     """
+    Yield the names of all groups available on the system
     """
     yield from ( _.gr_name for _ in grp.getgrall())
 
@@ -316,6 +327,14 @@ def getgroups(u:str) -> tuple:
 
 
 def getproctitle() -> str:
+    """
+    Retrieve the current process title.
+
+    This function uses the libc `prctl` system call to fetch the title of the current process.
+    The title is stored in a buffer, which is then decoded and returned as a UTF-8 string.
+
+    If an error occurs during retrieval, an empty string is returned.
+    """
     global libc
     try:
         buff = create_string_buffer(128)
@@ -342,6 +361,9 @@ def getusers_in_group(g:str) -> tuple:
         return tuple()
 
 def group_exists(g:str) -> bool:
+    """
+    Check if a group with the given name exists on the system. Returns True if it exists, False otherwise.
+    """
     try:
         grp.getgrnam(g)
         return True
@@ -357,10 +379,18 @@ def group_exists(g:str) -> bool:
 ####
 
 def iso_time(seconds:int) -> str:
+    """
+    Convert a time in seconds since the epoch to an ISO-formatted string (e.g., 'YYYY-MM-DD HH:MM'). 
+    """
+
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(seconds))
 
 
 def iso_seconds(timestring:str) -> int:
+    """
+    Convert an ISO-formatted time string to seconds since the epoch
+    """
+
     dt = datetime.datetime.strptime(timestring, '%Y-%m-%dT%H:%M')
     return dt.strftime("%s")
 
@@ -447,6 +477,10 @@ def mygroups() -> Tuple[str]:
 # N
 ####
 def now_as_seconds() -> int:
+    """
+    Return the current time as seconds since the epoch using a high-resolution clock.
+    """
+
     return time.clock_gettime(0)
 
 
@@ -544,6 +578,8 @@ def signal_name(i:int) -> str:
         return f"{signal.Signals(i).name} ({signal.strsignal(i)})"
     except:
         return f"unnamed signal {i}"
+
+
 def snooze(n:int) -> int:
     """
     Calculate the delay. The formula is arbitrary, and can
@@ -766,7 +802,7 @@ def version(full:bool = True) -> str:
 
 
 ####
-# W
+# W X Y Z
 ####
 
 
