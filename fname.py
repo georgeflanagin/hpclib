@@ -37,14 +37,18 @@ from   urlogger import URLogger
 # imports and objects that were written for this project.
 ###
 import fcntl
-import io
 import hashlib
+import io
+try:
+    import xxhash
+    hasher = xxhash.xxh64()
+except ImportError:
+    hasher = hashlib.sha1()
 ###
 # Global objects
 ###
 mynetid = getpass.getuser()
 logger = None
-
 ###
 # Credits
 ###
@@ -332,18 +336,18 @@ class Fname:
                 os.close(fd)
             except:
                 pass
-
-    def directory(self, terminated:bool=False) -> str:
+    @property
+    def directory(self) -> str:
         """
         returns: -- The directory part of the name.
         f.directory() =>> '/home/data/import' ... note the lack of a
             trailing solidus in the default behavior.
         """
 
-        if terminated:
-            return self._dir + os.sep
-        else:
-            return self._dir
+      
+        return self._dir
+
+
 
 
     @property
@@ -370,14 +374,11 @@ class Fname:
             with open(self._fqn, 'r') as f:
                 return len(f.read()) < 3 or not f.read().strip()
     
-        except FileNotFoundError:
-            return (f"File '{self._fqn}' not found.")
-
-        except PermissionError:
-            return (f"File '{self._fqn}' cannot be accessed due to permission issues.")
+        except (FileNotFoundError, PermissionError):
+            return False
 
         except Exception as e:
-            return (f"An unexpected error occurred: {e}")
+            return None
 
 
     @property
@@ -426,23 +427,18 @@ class Fname:
         Return the hash of the file's content. Initializes the hasher using xxhash first; 
         if unavailable, falls back to SHA-1. The hash is cached after the first computation.
         """
+        global hasher
         if self._edge_hash:
             return self._edge_hash
         try:
-            # Initialize hasher (use xxhash if available, otherwise fallback to SHA-1)
-            try:
-                import xxhash
-                hasher = xxhash.xxh64()
-            except ImportError:
-                hasher = hashlib.sha1()
-            
             with open(str(self), 'rb') as f:
                  hasher.update(f.read(io.DEFAULT_BUFFER_SIZE))
             
             self._edge_hash = hasher.hexdigest()
         
-        except Exception as e:   
-            return e
+        except:
+            self._content_hash = '0000000000000000'   
+
 
         return self._edge_hash
 
@@ -453,17 +449,12 @@ class Fname:
         Return the hash if it has already been calculated, otherwise
         calculate it and then return it.
         """
+        global hasher
+        
         if self._content_hash:
             return self._content_hash
 
         try:
-            # Initialize the hasher using xxhash first, fallback to SHA-1 if xxhash is not available
-            try:
-                import xxhash
-                hasher = xxhash.xxh64()
-            except ImportError:
-                hasher = hashlib.sha1()
-            
             with open(str(self), 'rb') as f:
                 _ = [hasher.update(chunk) for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b'')]
             

@@ -429,6 +429,7 @@ class LockFile:
             raise RuntimeError("Another instance is already running.")
 
         return self
+    
     def __exit__(self, exception_type:type, exception_value:object, traceback:object) -> bool:
         try:
             fcntl.flock(self.lockfile, fcntl.LOCK_UN)
@@ -499,25 +500,22 @@ def parse_proc(pid:int) -> dict:
     as a dict with keys set to lower without the "vm" in front,
     and the values converted to ints.
     """
-    lines = []
-    proc_file = '/proc/'+str(pid)+"/status"
-    with open(proc_file, 'r') as f:
-        rows = f.read().split("\n")
+    try:
+        with open(f'/proc/{pid}/status', 'r') as f:
+            rows = f.read().splitlines()
+    except (FileNotFoundError, PermissionError):
+        return None
 
-    if not len(rows): return None
+    if not rows: return None
 
-    interesting_keys = ['VmSize', 'VmLck', 'VmHWM',
-            'VmRSS', 'VmData', 'VmStk', 'VmExe', 'VmSwap' ]
+    interesting_keys = ['VmSize', 'VmLck', 'VmHWM', 'VmRSS', 
+                        'VmData', 'VmStk', 'VmExe', 'VmSwap' ]
 
-    kv = {}
-    for row in rows:
-        if ":" in row:
-            k, v = row.split(":", 1)
-        else:
-            continue
-        if k in interesting_keys:
-            kv[k.lower()[2:]] = int(v.split()[0])
-
+    kv = {k.lower()[2:]: int(v.split()[0])
+          for row in rows
+          if ":" in row
+          for k, v in [row.split(":", 1)]
+          if k in interesting_keys}
     return kv
 
 
@@ -535,8 +533,17 @@ def pids_of(process_name:str, anywhere:Any=None) -> list:
     returns -- a possibly empty list of ints containing the pids
         whose names match the text shred.
     """
-    results = subprocess.run(['pgrep','-u', 'canoe'], stdout=subprocess.PIPE)
-    return [ int(_) for _ in results.stdout.decode('utf-8').split('\n') if _ ]
+    if anywhere:
+        # Match process name anywhere in the command line
+        cmd = f'pgrep -f {process_name}'
+    else:
+        # Match exact process name
+        cmd = f'pgrep {process_name}'
+
+    # Execute the command
+    results = subprocess.run(cmd, stdout=subprocess.PIPE)
+    
+    return [int(_) for _ in results.stdout.decode('utf-8').split('\n') if _ ]
 
 
 ####
@@ -579,8 +586,7 @@ def signal_name(i:int) -> str:
     except:
         return f"unnamed signal {i}"
 
-
-def snooze(n:int) -> int:
+def snooze(n: int, num_retries: int = 10, delay: float = 10, scaling: float = 1.2) -> Generator:
     """
     Calculate the delay. The formula is arbitrary, and can
     be changed.
@@ -589,16 +595,13 @@ def snooze(n:int) -> int:
 
     returns -- a number of seconds to delay
     """
-    num_retries = 10
-    delay = 10
-    scaling = 1.2
+    for attempt in range(n, num_retries):
+        nap = delay * (scaling ** attempt)
+        print(f'Waiting {nap:.2f} seconds to try again.')
+        time.sleep(nap)
+        yield nap
 
-    if n == num_retries: return None
-    nap = delay * scaling ** n
-    tombstone('Waiting {} seconds to try again.'.format(nap))
-    time.sleep(nap)
-    return nap
-
+    yield None
 
 def splitter(group:Iterable, num_chunks:int) -> Iterable:
     """
