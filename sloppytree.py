@@ -1,37 +1,59 @@
 # -*- coding: utf-8 -*-
 import typing
 from   typing import *
-"""
-SloppyTree is derived from Python's dict object. It allows
-one to create an n-ary tree of arbitrary complexity whose
-members may be accessed by the methods in dict or the object.member
-syntax, depending on the usefulness of either expression. 
-"""
+
+###
+# Standard imports, starting with os and sys
+###
+min_py = (3, 11)
 import os
 import sys
-min_py = (3, 8)
 if sys.version_info < min_py:
     print(f"This program requires Python {min_py[0]}.{min_py[1]}, or higher.")
     sys.exit(os.EX_SOFTWARE)
 
 ###
-# Standard imports
+# Other standard distro imports
 ###
-from collections.abc import Hashable
+import argparse
+from   collections.abc import *
+import contextlib
+import getpass
+import logging
+
+###
+# Installed libraries like numpy, pandas, paramiko
+###
+from functools import reduce
+###
+# From hpclib
+###
+import linuxutils
+from   urdecorators import trap
+from   urlogger import URLogger
+
+###
+# imports and objects that were written for this project.
+###
 import math
 import pprint
-from   functools import reduce
+###
+# Global objects
+###
+mynetid = getpass.getuser()
+logger = None
 
+###
 # Credits
+###
 __author__ = 'George Flanagin'
-__copyright__ = 'Copyright 2021'
+__copyright__ = 'Copyright 2024, University of Richmond'
 __credits__ = None
-__version__ = 1.2
-__maintainer__ = 'Alina Enikeeva'
-__email__ = ['me+ur@georgeflanagin.com', 'gflanagin@richmond.edu']
-__status__ = 'Teaching example'
+__version__ = 0.1
+__maintainer__ = 'George Flanagin, Skyler He'
+__email__ = 'gflanagin@richmond.edu, yingxinskyler.he@gmail.com'
+__status__ = 'in progress'
 __license__ = 'MIT'
-
 
 class SloppyDict: pass
 
@@ -46,7 +68,7 @@ def deepsloppy(o:dict) -> Union[SloppyDict, object]:
     """
     Multi level slop.
     """
-    if isinstance(o, dict): 
+    if isinstance(o, dict):
         o = SloppyTree(o)
         for k, v in o.items():
             o[k] = deepsloppy(v)
@@ -59,7 +81,6 @@ def deepsloppy(o:dict) -> Union[SloppyDict, object]:
         pass
 
     return o
-
 
 class SloppyDict(dict):
     """
@@ -103,11 +124,11 @@ class SloppyDict(dict):
         for k in unmoved_keys:
             new_data[k] = self[k]
 
-        if self_assign: 
+        if self_assign:
             self = new_data
             return self
         else:
-            return copy.deepcopy(new_data)       
+            return copy.deepcopy(new_data)
 
 
 
@@ -118,7 +139,7 @@ class SloppyTree(dict):
     """
     def __getattr__(self, k:str) -> object:
         """
-        Retrieve the element, or implicity call the over-ridden 
+        Retrieve the element, or implicity call the over-ridden
         __missing__ method, and make a new one.
         """
         return self[k]
@@ -131,17 +152,16 @@ class SloppyTree(dict):
             d[(1, 'c', 6)] = 'value'
 
         is the same as:
-        
+
             d[1]['c'][6] = 'value'
         """
-        
         # Typical case, k is the key we want.
         if isinstance(k, (str, int)):
             super().__setitem__(k, v)
             return
 
-        elif isinstance(k, (list, tuple)): 
-            if len(k) == 1: 
+        elif isinstance(k, (list, tuple)):
+            if len(k) == 1:
                 self[k[0]] = v
                 return
             elif len(k) > 1:
@@ -150,7 +170,7 @@ class SloppyTree(dict):
 
         else:
             sys.exit(1)
-            
+
 
     def __call__(self, key_as_str:str) -> object:
         """
@@ -166,7 +186,6 @@ class SloppyTree(dict):
             ptr = v = ptr[k]
         return v
 
-
     def __setattr__(self, k:str, v:object) -> None:
         """
         Sets the value to the key, or iterated key. This syntax:
@@ -174,22 +193,20 @@ class SloppyTree(dict):
             d[(1, 'c', 6)] = 'value'
 
         is the same as:
-        
+
             d[1]['c'][6] = 'value'
         """
         # Typical case, k is the key we want.
-        if isinstance(k, str): 
+        if isinstance(k, str):
             self[k] = v
 
         elif len(k) == 1:
             self[k[0]] = v
-            
+
         else:
             for element in k:
                 d = self[element]
                 d[k[1:]] = v
-
-
     def __delattr__(self, k:str) -> None:
         """
         Remove it if we can.
@@ -206,7 +223,7 @@ class SloppyTree(dict):
         return self
 
 
-    def __invert__(self) -> int: 
+    def __invert__(self) -> int:
         """
         return the number of paths from the root node to the leaves,
         ignoring the nodes along the way.
@@ -220,8 +237,7 @@ class SloppyTree(dict):
         also sees the leaves.
         """
         return self.traverse
-
-
+    
     def __bool__(self) -> bool:
         """
         When a SloppyTree is evaluated with if, it becomes a boolean.
@@ -249,6 +265,7 @@ class SloppyTree(dict):
 
     def __str__(self) -> str:
         return self.printable
+        
 
     ###
     # All objects derived from dict need these functions if they
@@ -261,7 +278,7 @@ class SloppyTree(dict):
     def leaves(self) -> object:
         """
         Walk the leaves only, left to right.
-        """ 
+        """
         for k, v in self.items():
             if isinstance(v, dict):
                 if v=={}:
@@ -269,8 +286,6 @@ class SloppyTree(dict):
                 yield from v.leaves()
             else:
                 yield v
-
-
     @property
     def printable(self) -> str:
         """
@@ -283,7 +298,7 @@ class SloppyTree(dict):
         """
         Emit all the nodes of a tree left-to-right and top-to-bottom.
         The bool is included so that you can know whether you have reached
-        a leaf. 
+        a leaf.
 
         returns -- a tuple with the value of the node, and 1 => key, and 0 => leaf.
 
@@ -300,21 +315,20 @@ class SloppyTree(dict):
             else:
                 yield v, 0 if with_indicator else v
 
-
     def as_tuples(self) -> tuple:
         """
-        A generator to return all paths from root to leaves as 
+        A generator to return all paths from root to leaves as
         tuples of the nodes along the way.
         """
         tup = []
         for node, indicator in self.traverse():
             tup.append(node)
-            if not indicator: 
+            if not indicator:
                 yield tuple(tup)
-                tup = []        
+                tup = []
 
-    
-    def iterate(self, dct):    
+
+    def iterate(self, dct):
         for key, value in dct.items():
             print(f"dict-key {key} with kids {len(value)}")
 
@@ -326,8 +340,7 @@ class SloppyTree(dict):
         for k, v in self.traverse():
             if v==0:
                 return True
-
-
+    
     def tree_as_table(self, nested_dict:SloppyTree=None, prepath=()):
         """
         Finds the path from the root to each leaf.
@@ -360,58 +373,43 @@ class SloppyTree(dict):
             if k not in visited:
                 path=[]
                 visited.append(k)
-                path = self.dfs(t, k, visited, path, v)     
+                path = self.dfs(t, k, visited, path, v)
                 if v == 0:
-                    path = visited 
+                    path = visited
                     visited = []
                     print("the path: ", path)
 
 
-if __name__ == "__main__":
-    t = SloppyTree()
+if __name__ == '__main__':
 
-    print("Adding members with the dot notation")
-    t.a.b.c
-    t.a.b.c.d = 6
-    t.a.b.e = 5
-    t.a['c'].sixteen = "fred"
+    here       = os.getcwd()
+    progname   = os.path.basename(__file__)[:-3]
+    configfile = f"{here}/{progname}.toml"
+    logfile    = f"{here}/{progname}.log"
+    lockfile   = f"{here}/{progname}.lock"
+    
+    parser = argparse.ArgumentParser(prog="sloppytree", 
+        description="What sloppytree does, sloppytree does best.")
 
-    for item in t.tree_as_table(t):
-        print(f"path {item}")
+    parser.add_argument('--loglevel', type=int, 
+        choices=range(logging.FATAL, logging.NOTSET, -10),
+        default=logging.DEBUG,
+        help=f"Logging level, defaults to {logging.DEBUG}")
 
-    print("Trying compound key")
-    t[('a','b','c','d')] = 7
-    for item in t.tree_as_table(t):
-        print(f"path {item}")
+    parser.add_argument('-o', '--output', type=str, default="",
+        help="Output file name")
+    
+    parser.add_argument('-z', '--zap', action='store_true', 
+        help="Remove old log file and create a new one.")
 
+    myargs = parser.parse_args()
+    logger = URLogger(logfile=logfile, level=myargs.loglevel)
 
- 
+    try:
+        outfile = sys.stdout if not myargs.output else open(myargs.output, 'w')
+        with contextlib.redirect_stdout(outfile):
+            sys.exit(globals()[f"{progname}_main"](myargs))
 
-#    tt = SloppyTree()
-#    tt.kingdom
-#    tt.kingdom.animals
-#    tt.kingdom.animals.vertebrates
-#    tt.kingdom.animals.invertebrates
-#    tt.kingdom["plants"] = "gymnosperms", "angiosperms"
-#    tt.kingdom["fungi"]
-#    tt.kingdom.animals.vertebrates.mammals
-#    tt.kingdom.animals.vertebrates.mammals = "rodents", "mice", "hamsters"
-#    
-#
-#    tt.kingdom.animals.vertebrates["reptile"] = "snakes", "chameleon"
-#
-#    tt.kingdom.animals.invertebrates.mollusks = "oysters"
-#    tt.kingdom.animals.invertebrates.sponges = "brown", "yellow"
-# 
-#
-#    print("number of paths", tt.__invert__())
-#
-#
-#
-#    for item in tt.tree_as_table(tt):
-#        print(f"path {item}")
-#
-#    tt[('kingdom','animals','vertebrates','mammals')] = 'cat'
-#    for item in tt.tree_as_table(tt):
-#        print(f"path {item}")
-#
+    except Exception as e:
+        print(f"Escaped or re-raised exception: {e}")
+

@@ -586,7 +586,7 @@ def signal_name(i:int) -> str:
     except:
         return f"unnamed signal {i}"
 
-def snooze(n: int, num_retries: int = 10, delay: float = 10, scaling: float = 1.2) -> Generator:
+def snooze(n: int, num_retries: int = 10, delay: float = 10, scaling: float = 1.2) -> float:
     """
     Calculate the delay. The formula is arbitrary, and can
     be changed.
@@ -601,7 +601,6 @@ def snooze(n: int, num_retries: int = 10, delay: float = 10, scaling: float = 1.
         time.sleep(nap)
         yield nap
 
-    yield None
 
 def splitter(group:Iterable, num_chunks:int) -> Iterable:
     """
