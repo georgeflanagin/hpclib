@@ -214,15 +214,6 @@ class SloppyTree(dict):
         if k in self: del self[k]
 
 
-    def __ilshift__(self, keys:Union[list, tuple]) -> SloppyTree:
-        """
-        Create a large number of sibling keys from a list.
-        """
-        for k in keys:
-            self[k] = SloppyTree()
-        return self
-
-
     def __invert__(self) -> int:
         """
         return the number of paths from the root node to the leaves,
