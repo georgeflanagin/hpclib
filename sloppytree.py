@@ -91,7 +91,7 @@ class SloppyDict(dict):
         Gets the value of the key in the dictionary.
         """
         if k in self: return self[k]
-        raise AttributeError(f"No element named {k}")
+        raise SloppyException(f"No element named {k}")
 
     def __setattr__(self, k:str, v:object) -> None:
         """
@@ -105,7 +105,7 @@ class SloppyDict(dict):
         Deletes the key in the dictionary.
         """
         if k in self: del self[k]
-        else: raise AttributeError(f"No element named {k}")
+        else: raise SloppyException(f"No element named {k}")
 
     def reorder(self, some_keys:list=[], self_assign:bool=True) -> SloppyDict:
         """
@@ -119,8 +119,8 @@ class SloppyDict(dict):
                 new_data[k] = self[k]
                 unmoved_keys.remove(k)
             except KeyError as e:
-                pass
-
+                raise SloppyException(f"{k} not found")
+        
         for k in unmoved_keys:
             new_data[k] = self[k]
 
@@ -128,7 +128,7 @@ class SloppyDict(dict):
             self = new_data
             return self
         else:
-            return copy.deepcopy(new_data)
+            return new_data
 
 
 
@@ -152,7 +152,7 @@ class SloppyTree(dict):
             d[(1, 'c', 6)] = 'value'
 
         is the same as:
-
+ 
             d[1]['c'][6] = 'value'
         """
         # Typical case, k is the key we want.
@@ -182,7 +182,7 @@ class SloppyTree(dict):
         ptr = self
         for k in key_as_str.split('.'):
             if k not in ptr:
-                raise AttributeError(f"{k=} not found in sub-tree {ptr=}")
+                raise SloppyException(f"{k=} not found in sub-tree {ptr=}")
             ptr = v = ptr[k]
         return v
 
@@ -212,7 +212,7 @@ class SloppyTree(dict):
         Remove it if we can.
         """
         if k in self: del self[k]
-
+        #else: raise SloppyException(f"No element named {k}")
 
     def __invert__(self) -> int:
         """
@@ -274,7 +274,11 @@ class SloppyTree(dict):
             if isinstance(v, dict):
                 if v=={}:
                     yield v
-                yield from v.leaves()
+                else:
+                    if isinstance(v, SloppyTree):
+                        yield from v.leaves()
+                    else:
+                        yield from v.items()
             else:
                 yield v
     @property
@@ -371,36 +375,15 @@ class SloppyTree(dict):
                     print("the path: ", path)
 
 
-if __name__ == '__main__':
 
-    here       = os.getcwd()
-    progname   = os.path.basename(__file__)[:-3]
-    configfile = f"{here}/{progname}.toml"
-    logfile    = f"{here}/{progname}.log"
-    lockfile   = f"{here}/{progname}.lock"
-    
-    parser = argparse.ArgumentParser(prog="sloppytree", 
-        description="What sloppytree does, sloppytree does best.")
+class SloppyException(LookupError):
+    def __init__(self, message, original_exception=None):
+        super().__init__(message)
+        self.original_exception = original_exception
 
-    parser.add_argument('--loglevel', type=int, 
-        choices=range(logging.FATAL, logging.NOTSET, -10),
-        default=logging.DEBUG,
-        help=f"Logging level, defaults to {logging.DEBUG}")
-
-    parser.add_argument('-o', '--output', type=str, default="",
-        help="Output file name")
-    
-    parser.add_argument('-z', '--zap', action='store_true', 
-        help="Remove old log file and create a new one.")
-
-    myargs = parser.parse_args()
-    logger = URLogger(logfile=logfile, level=myargs.loglevel)
-
-    try:
-        outfile = sys.stdout if not myargs.output else open(myargs.output, 'w')
-        with contextlib.redirect_stdout(outfile):
-            sys.exit(globals()[f"{progname}_main"](myargs))
-
-    except Exception as e:
-        print(f"Escaped or re-raised exception: {e}")
-
+    def raise_original(self):
+        """Re-raise the orignal exception if it exists"""
+        if self.original_exception:
+            raise self.original_exception
+        else:
+            raise self 
