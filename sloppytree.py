@@ -227,7 +227,7 @@ class SloppyTree(dict):
         NOTE: dict.__iter__ only sees keys, but SloppyTree.__iter__
         also sees the leaves.
         """
-        return self.traverse
+        return self.traverse()
     
     def __bool__(self) -> bool:
         """
@@ -274,11 +274,7 @@ class SloppyTree(dict):
             if isinstance(v, dict):
                 if v=={}:
                     yield v
-                else:
-                    if isinstance(v, SloppyTree):
-                        yield from v.leaves()
-                    else:
-                        yield from v.items()
+                yield from SloppyTree(v).leaves()
             else:
                 yield v
     @property
@@ -306,7 +302,7 @@ class SloppyTree(dict):
         for k, v in self.items():
             yield k, 1 if with_indicator else k
             if isinstance(v, dict):
-                yield from v.traverse(with_indicator)
+                yield from SloppyTree(v).traverse(with_indicator)
             else:
                 yield v, 0 if with_indicator else v
 
@@ -323,19 +319,6 @@ class SloppyTree(dict):
                 tup = []
 
 
-    def iterate(self, dct):
-        for key, value in dct.items():
-            print(f"dict-key {key} with kids {len(value)}")
-
-            if isinstance(value, dict):
-                self.iterate(value)
-
-
-    def findIndicator(self, dct):
-        for k, v in self.traverse():
-            if v==0:
-                return True
-    
     def tree_as_table(self, nested_dict:SloppyTree=None, prepath=()):
         """
         Finds the path from the root to each leaf.
@@ -353,27 +336,6 @@ class SloppyTree(dict):
                 #### append the value of the leaf based on the key here
                 path=path+(nested_dict.get(k), )
                 yield path
-
-
-    def dfs(self, start, end, visited, path, v):
-        path.append(end)
-        #print("???", start, end, v)
-        return path
-
-    def dfsPrinted(self,t):
-        #visited = [False]*self.__len__()
-        visited = []
-        path = []
-        for k, v in self.traverse():
-            if k not in visited:
-                path=[]
-                visited.append(k)
-                path = self.dfs(t, k, visited, path, v)
-                if v == 0:
-                    path = visited
-                    visited = []
-                    print("the path: ", path)
-
 
 
 class SloppyException(LookupError):
