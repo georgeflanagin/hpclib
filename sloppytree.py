@@ -439,4 +439,33 @@ class SloppyTree(dict):
                 path=path+(nested_dict.get(k), )
                 yield path
 
+    def display_tree(self, prefix=""):
+        """
+        Display the SloppyTree structure with indentation represnting the tree hierarchy
+        """
+         
+        for i, (k, v) in enumerate(self.items()):
+                if i == len(self) - 1:  
+                    print(prefix + "└" + str(k))
+                    new_prefix = prefix + "    "
+                else:
+                    print(prefix + "├" + str(k))
+                    new_prefix = prefix + "│ "
+            
+                if isinstance(v, dict):
+                    SloppyTree(v).display_tree(new_prefix)
+                elif isinstance(v, list):
+                    for idx, item in enumerate(v):
+                        if idx == len(v) - 1:
+                            print(new_prefix + "└" + str(item))
+                        else:
+                            print(new_prefix + "├" + str(item))
+                else:
+                    print(new_prefix + "└" + str(v))
+
+
+
+
+
+
 

@@ -1,5 +1,5 @@
 import unittest
-from sloppytree import * 
+from sloppytree import *
 
 class TestSloppyDict(unittest.TestCase):
 
@@ -145,6 +145,10 @@ class TestSloppyDict(unittest.TestCase):
         sd = SloppyTree(self.long_dict)
         #print(sd.__iter__())
         #print([i for i in sd.tree_as_table()])
+    
+    def test_display_tree(self):
+        sd = SloppyTree(self.empty_dict)
+        print(sd.display_tree())
 
 if __name__ == '__main__':
     unittest.main()
