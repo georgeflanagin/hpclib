@@ -35,7 +35,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that were written for this project.
 ###
-from enum import Enum
+import enum 
 import math
 import pprint
 ###
@@ -58,9 +58,9 @@ __license__ = 'MIT'
 
 
 ###
-# Indicator(Enum)
+# Indicator(enum.IntEnum)
 ###
-class Indicator(Enum):
+class Indicator(enum.IntEnum):
     KEY = 1
     LEAF = 0
 
@@ -206,6 +206,8 @@ class SloppyTree(dict):
             if k not in ptr:
                 raise SloppyException(f"{k=} not found in sub-tree {ptr=}")
             ptr = v = ptr[k]
+        return v
+
 
     ###
     # D

@@ -140,24 +140,12 @@ class TestSloppyDict(unittest.TestCase):
     def test_as_tuples(self):
         sd = SloppyTree(self.long_dict)
         #print([i for i in sd.as_tuples()])                                            
-    def test_iterate(self):
-        sd = SloppyTree(self.long_dict)
-        #print(sd.iterate())
-
-    def test_findIndicator(self):
-        sd = SloppyTree(self.long_dict)
-        print(sd.findIndicator())
 
     def test_tree_as_table(self):
         sd = SloppyTree(self.long_dict)
         #print(sd.__iter__())
         #print([i for i in sd.tree_as_table()])
 
-    def test_dfs(self):
-        sd = SloppyTree(self.long_dict)
-        v = []
-        p = []
-        print(sd.dfs('l1','l3a', v, p, None))
 if __name__ == '__main__':
     unittest.main()
 
