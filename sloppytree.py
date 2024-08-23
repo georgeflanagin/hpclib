@@ -35,6 +35,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that were written for this project.
 ###
+from enum import Enum
 import math
 import pprint
 ###
@@ -55,7 +56,14 @@ __email__ = 'gflanagin@richmond.edu, yingxinskyler.he@gmail.com'
 __status__ = 'in progress'
 __license__ = 'MIT'
 
+
 ###
+# Indicator(Enum)
+###
+class Indicator(Enum):
+    KEY = 1
+    LEAF = 0
+
 # SloppyException
 ###
 class SloppyException(LookupError):
@@ -404,11 +412,11 @@ class SloppyTree(dict):
         """
 
         for k, v in self.items():
-            yield k, 1 if with_indicator else k
+            yield k, Indicator.KEY if with_indicator else k
             if isinstance(v, dict):
                 yield from SloppyTree(v).traverse(with_indicator)
             else:
-                yield v, 0 if with_indicator else v
+                yield v, Indicator.LEAF if with_indicator else v
 
 
     def tree_as_table(self, nested_dict:SloppyTree=None, prepath=()):
