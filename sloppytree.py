@@ -35,6 +35,7 @@ from   urlogger import URLogger
 ###
 # imports and objects that were written for this project.
 ###
+import curses
 import enum 
 import math
 import pprint
@@ -43,7 +44,7 @@ import pprint
 ###
 mynetid = getpass.getuser()
 logger = None
-
+T, L, I, H = "├", "└", "┃", "─"
 ###
 # Credits
 ###
@@ -83,7 +84,7 @@ class SloppyException(LookupError):
 
 class SloppyDict: pass
 ###
-#Utility functions
+# Utility functions
 ###
 def deepsloppy(o:dict) -> Union[SloppyDict, object]:
     """
@@ -439,33 +440,54 @@ class SloppyTree(dict):
                 path=path+(nested_dict.get(k), )
                 yield path
 
-    def display_tree(self, prefix=""):
+
+
+    def display_tree(self,stdscr, prefix="", depth=0):
         """
         Display the SloppyTree structure with indentation represnting the tree hierarchy
         """
-         
+
+        curses.start_color()
+        
+        # Define color pairs
+        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)  # For root nodes
+        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # For leaf nodes
+        
+        root_color = curses.color_pair(1)
+        leaf_color = curses.color_pair(2)
+        default_color = curses.A_NORMAL  # Default color for branches
+
         for i, (k, v) in enumerate(self.items()):
-                if i == len(self) - 1:  
-                    print(prefix + "└" + str(k))
-                    new_prefix = prefix + "    "
-                else:
-                    print(prefix + "├" + str(k))
-                    new_prefix = prefix + "│ "
+            # Determine if this is the root node or a leaf node
+            is_leaf = not isinstance(v, (dict, list))
+            color = root_color if depth == 0 else (leaf_color if is_leaf else default_color)
             
-                if isinstance(v, dict):
-                    SloppyTree(v).display_tree(new_prefix)
-                elif isinstance(v, list):
-                    for idx, item in enumerate(v):
-                        if idx == len(v) - 1:
-                            print(new_prefix + "└" + str(item))
-                        else:
-                            print(new_prefix + "├" + str(item))
-                else:
-                    print(new_prefix + "└" + str(v))
+            # Determine the appropriate line connector
+            is_last = i == len(self) - 1
+            connector = L if is_last else T
+            stdscr.addstr(depth, 0, prefix + f"{connector}{H}{H} " + str(k), color)
+            
+            # Prepare new prefix for child nodes
+            new_prefix = prefix + ("    " if is_last else f"{I}   ")
+            depth += 1
+            
+            # Recursively handle nested structures
+            if isinstance(v, dict):
+                depth = SloppyTree(v).display_tree(stdscr, new_prefix, depth)
+            elif isinstance(v, list):
+                for idx, item in enumerate(v):
+                    is_last_item = idx == len(v) - 1
+                    item_connector = L if is_last_item else T
+                    item_prefix = new_prefix + ("    " if is_last_item else f"{I}   ")
+                    
+                    if isinstance(item, dict):
+                        depth = SloppyTree(item).display_tree(stdscr, item_prefix, depth)
+                    else:
+                        stdscr.addstr(depth, 0, item_prefix + f"{item_connector}{H}{H} " + str(item), leaf_color)
+                        depth += 1
+            else:
+                stdscr.addstr(depth, 0, new_prefix + f"{L}{H}{H} " + str(v), leaf_color)
+                depth += 1
 
-
-
-
-
-
+        return depth
 

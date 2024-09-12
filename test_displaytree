@@ -1,0 +1,39 @@
+import curses
+from sloppytree import SloppyTree
+
+def main(stdscr):
+    # Initialize the tree structure
+    tree = SloppyTree({
+        'root': {
+            'branch1': {
+                'leaf1': 1,
+                'leaf2': {
+                    'subleaf1': 2,
+                    'subleaf2': [3, 4],
+                },
+                'leaf3': [5, {'deep_leaf1': 6, 'deep_leaf2': 7}]
+            },
+            'branch2': {
+                'leaf4': 8,
+                'leaf5': [9, 10]
+            },
+            'branch3': {
+                'leaf6': 11,
+                'leaf7': {'subleaf3': 12, 'subleaf4': 13}
+            }
+        }
+    })
+
+    # Clear the screen
+    stdscr.clear()
+    # Display the tree structure
+    tree.display_tree(stdscr)
+    # Refresh the screen to show the tree
+    stdscr.refresh()
+    # Wait for user input before exiting
+    stdscr.getch()
+
+# Start the curses application
+if __name__ == "__main__":
+    curses.wrapper(main)
+
