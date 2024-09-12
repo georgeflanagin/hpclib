@@ -38,9 +38,8 @@ __license__ = 'MIT'
 @trap
 def dorunrun(command:Union[str, list],
     timeout:int=None,
-    verbose:bool=False,
-    quiet:bool=False,
     return_datatype:type=bool,
+    OK:set={0}
     ) -> Union[str, bool, int, dict]:
     """
     A wrapper around (almost) all the complexities of running child 
@@ -48,15 +47,17 @@ def dorunrun(command:Union[str, list],
     command -- a string, or a list of strings, that constitute the
         commonsense definition of the command to be attemped. 
     timeout -- generally, we don't
-    verbose -- do we want some narrative to stderr?
-    quiet -- overrides verbose, shell, etc. 
     return_datatype -- this argument corresponds to the item 
         the caller wants returned. It can be one of these values.
 
-            bool : True if the subprocess exited with code 0.
+            bool : True if the subprocess exited with a code in
+                    the set containing "OK" values. 
             int  : the exit code itself.
             str  : the stdout of the child process.
             dict : everything as a dict of key-value pairs.
+    OK -- a set containing exit codes for the command that are 
+        construed to be acceptable. The default is a set containing
+        zero, {0}, which is what is meant in most, but not all cases.
 
     returns -- a value corresponding to the requested info.
     """
@@ -76,8 +77,6 @@ def dorunrun(command:Union[str, list],
     else:
         raise Exception(f"Bad argument type to dorunrun: {command=}")
 
-    if verbose: sys.stderr.write(f"{command=}\n")
-
     try:
         result = subprocess.run(command, 
             timeout=timeout, 
@@ -88,7 +87,7 @@ def dorunrun(command:Union[str, list],
             shell=False)
 
         code = result.returncode
-        b_code = code == 0
+        b_code = code in OK
         i_code = code
         s = result.stdout[:-1] if result.stdout.endswith('\n') else result.stdout
         e = result.stderr[:-1] if result.stderr.endswith('\n') else result.stderr
