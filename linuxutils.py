@@ -137,8 +137,8 @@ def byte_scale(i:int, key:str='X') -> str:
 def bytes2human(n:int) -> str:
     """
     Convert a byte count to a human-readable format (e.g., KB, MB, GB).     Returns the formatted string.
-    
-    Examples: 
+
+    Examples:
         http://code.activestate.com/recipes/578019
         bytes2human(10000)
         '9.8K'
@@ -223,7 +223,7 @@ def columns() -> int:
 ###
 def cpucounter() -> int:
     """
-    Return the number of CPU cores available on the current system, 
+    Return the number of CPU cores available on the current system,
     based on the operating system.
     """
     names = {
@@ -360,6 +360,30 @@ def getusers_in_group(g:str) -> tuple:
     except KeyError as e:
         return tuple()
 
+def group_dicts() -> dict:
+    """
+    The dict will have both the names and the integer values as keys,
+    so the lookup can proceed in either direction. IOW, the dict will
+    contain both of these pairs:
+
+        groups['gflanagi'] = 2032
+        groups[2032] = 'gflanagi'
+
+    """
+    groups = {}
+    for line in open('/etc/group').read().split():
+        if line.startswith('#') or not line.strip():
+            continue
+
+        # Split the line into components: group_name:x:group_id:members
+        parts = line.strip().split(':')
+        if len(parts) >= 3:
+            groups[parts[0]] = int(parts[2])
+            groups[int(parts[2])] = parts[0]
+
+    return groups
+
+
 def group_exists(g:str) -> bool:
     """
     Check if a group with the given name exists on the system. Returns True if it exists, False otherwise.
@@ -380,7 +404,7 @@ def group_exists(g:str) -> bool:
 
 def iso_time(seconds:int) -> str:
     """
-    Convert a time in seconds since the epoch to an ISO-formatted string (e.g., 'YYYY-MM-DD HH:MM'). 
+    Convert a time in seconds since the epoch to an ISO-formatted string (e.g., 'YYYY-MM-DD HH:MM').
     """
 
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(seconds))
@@ -429,7 +453,7 @@ class LockFile:
             raise RuntimeError("Another instance is already running.")
 
         return self
-    
+
     def __exit__(self, exception_type:type, exception_value:object, traceback:object) -> bool:
         try:
             fcntl.flock(self.lockfile, fcntl.LOCK_UN)
@@ -477,6 +501,28 @@ def mygroups() -> Tuple[str]:
 ####
 # N
 ####
+def next_uid() -> int:
+    existing_uids = {entry.pw_uid for entry in pwd.getpwall()}
+
+    min_uid = None
+    with open('/etc/login.defs', 'r') as f:
+        for line in f:
+            if line.startswith('UID_MIN'):
+                min_uid = int(line.split()[1])
+                break
+
+    if min_uid is None:
+        # Default minimum UID for regular users if not found in login.defs
+        min_uid = 1000
+
+    # Find the next available UID starting from min_uid
+    next_uid = min_uid
+    while next_uid in existing_uids:
+        next_uid += 1
+
+    return next_uid
+
+
 def now_as_seconds() -> int:
     """
     Return the current time as seconds since the epoch using a high-resolution clock.
@@ -508,7 +554,7 @@ def parse_proc(pid:int) -> dict:
 
     if not rows: return None
 
-    interesting_keys = ['VmSize', 'VmLck', 'VmHWM', 'VmRSS', 
+    interesting_keys = ['VmSize', 'VmLck', 'VmHWM', 'VmRSS',
                         'VmData', 'VmStk', 'VmExe', 'VmSwap' ]
 
     kv = {k.lower()[2:]: int(v.split()[0])
@@ -542,7 +588,7 @@ def pids_of(process_name:str, anywhere:Any=None) -> list:
 
     # Execute the command
     results = subprocess.run(cmd, stdout=subprocess.PIPE)
-    
+
     return [int(_) for _ in results.stdout.decode('utf-8').split('\n') if _ ]
 
 
@@ -635,7 +681,7 @@ def squeal(s: str=None, rectus: bool=True, source=None) -> str:
     """ The safety goat will appear when there is trouble. """
     tombstone(str)
     return
-    
+
     for raster in goat:
         if not rectus:
             print(raster.replace(RED, "").replace(LIGHT_BLUE, "").replace(REVERT, ""))
@@ -815,19 +861,19 @@ if __name__ == '__main__':
     configfile = f"{here}/{progname}.toml"
     logfile    = f"{here}/{progname}.log"
     lockfile   = f"{here}/{progname}.lock"
-    
-    parser = argparse.ArgumentParser(prog="linuxutils", 
+
+    parser = argparse.ArgumentParser(prog="linuxutils",
         description="What linuxutils does, linuxutils does best.")
 
-    parser.add_argument('--loglevel', type=int, 
+    parser.add_argument('--loglevel', type=int,
         choices=range(logging.FATAL, logging.NOTSET, -10),
         default=logging.DEBUG,
         help=f"Logging level, defaults to {logging.DEBUG}")
 
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
-    
-    parser.add_argument('-z', '--zap', action='store_true', 
+
+    parser.add_argument('-z', '--zap', action='store_true',
         help="Remove old log file and create a new one.")
 
     myargs = parser.parse_args()

@@ -184,7 +184,7 @@ def append_text(s:str, f:Union[str, object]) -> int:
 
 
 ####
-# C 
+# C
 ####
 
 ####
@@ -478,7 +478,7 @@ def random_file(name_prefix:str, *, length:int=None, break_on:str=None) -> tuple
         os.close(f_no)
     except Exception as e:
         tombstone(str(e))
-    
+
     return f_name, num_written
 
 def random_string(length:int=10, want_bytes:bool=False, all_alpha:bool=True) -> str:
@@ -521,7 +521,7 @@ def read_whitespace_file(filename:str, *, comment_char:str=None) -> tuple:
     with open(filename) as f:
         if comment_char is None:
             yield from (" ".join(f.read().split('\n'))).split()
-    
+
         else:
             lines = f.readlines()
             yield from (token for l in lines if not l.strip().startswith(comment_char) for token in l.split())

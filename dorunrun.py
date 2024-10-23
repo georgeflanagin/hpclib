@@ -64,20 +64,20 @@ def dorunrun(command:Union[str, list],
     """
     A wrapper around (almost) all the complexities of running child
         processes.
-    
+
     Parameters:
     -----------
-    command: A string, or a list of strings, 
+    command: A string, or a list of strings,
              that constitute the commonsense definition of the command to be attemped.
     timeout: Generally, we don't
-    return_datatype: This argument corresponds to the item the caller wants returned. 
+    return_datatype: This argument corresponds to the item the caller wants returned.
                      It can be one of these values:
-        
+
         - bool : True if the subprocess exited with code 0.
         - int  : the exit code itself.
         - str  : the stdout of the child process.
         - dict : everything as a dict of key-value pairs.
-        
+
         The default data type is dict
     ----------
     Returns: A value corresponding to the requested info.
@@ -126,8 +126,6 @@ def dorunrun(command:Union[str, list],
                     "stderr":e}
 
     except subprocess.TimeoutExpired as e:
-        print(f"Process exceeded time limit at {timeout} seconds.")
-        print(f"Command was {command}")
         return {"OK":False,
                 "code":255,
                 "name":ExitCode(255).name,
@@ -136,6 +134,7 @@ def dorunrun(command:Union[str, list],
 
     except Exception as e:
         raise Exception(f"Unexpected error: {str(e)}")
+
 
 class FakingIt(enum.EnumMeta):
 
@@ -184,7 +183,7 @@ class ExitCode(enum.IntEnum, metaclass=FakingIt):
 
     # BASH builtin error (e.g. basename)
     BUILTIN = 2
-    
+
     # No device or address by that name was found.
     NODEVICE = 6
 
@@ -266,19 +265,19 @@ if __name__ == '__main__':
     configfile = f"{here}/{progname}.toml"
     logfile    = f"{here}/{progname}.log"
     lockfile   = f"{here}/{progname}.lock"
-    
-    parser = argparse.ArgumentParser(prog="dorunrun", 
+
+    parser = argparse.ArgumentParser(prog="dorunrun",
         description="What dorunrun does, dorunrun does best.")
 
-    parser.add_argument('--loglevel', type=int, 
+    parser.add_argument('--loglevel', type=int,
         choices=range(logging.FATAL, logging.NOTSET, -10),
         default=logging.DEBUG,
         help=f"Logging level, defaults to {logging.DEBUG}")
 
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
-    
-    parser.add_argument('-z', '--zap', action='store_true', 
+
+    parser.add_argument('-z', '--zap', action='store_true',
         help="Remove old log file and create a new one.")
 
     myargs = parser.parse_args()

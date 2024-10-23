@@ -36,7 +36,7 @@ from   urlogger import URLogger
 # imports and objects that were written for this project.
 ###
 import curses
-import enum 
+import enum
 import math
 import pprint
 ###
@@ -77,7 +77,7 @@ class SloppyException(LookupError):
         if self.original_exception:
             raise self.original_exception
         else:
-            raise self 
+            raise self
 
 
 
@@ -126,7 +126,7 @@ class SloppyDict(dict):
         """
         if k in self: del self[k]
         else: raise SloppyException(f"No element named {k}")
-    
+
     def __getattr__(self, k:str) -> object:
         """
         Gets the value of the key in the dictionary.
@@ -157,7 +157,7 @@ class SloppyDict(dict):
                 unmoved_keys.remove(k)
             except KeyError as e:
                 raise SloppyException(f"{k} not found")
-        
+
         for k in unmoved_keys:
             new_data[k] = self[k]
 
@@ -167,7 +167,7 @@ class SloppyDict(dict):
         else:
             return new_data
 
-    
+
 
 class SloppyTree: pass
 class SloppyTree(dict):
@@ -281,9 +281,9 @@ class SloppyTree(dict):
         also sees the leaves.
         """
         return self.traverse()
-    
+
     ###
-    # S 
+    # S
     ###
     def __setattr__(self, k:str, v:object) -> None:
         """
@@ -315,7 +315,7 @@ class SloppyTree(dict):
             d[(1, 'c', 6)] = 'value'
 
         is the same as:
- 
+
             d[1]['c'][6] = 'value'
         """
         # Typical case, k is the key we want.
@@ -336,15 +336,15 @@ class SloppyTree(dict):
 
 
     def __setstate__(self, d): self.__dict__.update(d)
-    
+
     def __str__(self) -> str:
-        return self.printable
+        return str(dict(self))
 
 
-        
+
 
     ###
-    # Regular methods 
+    # Regular methods
     ###
 
     ###
@@ -381,7 +381,7 @@ class SloppyTree(dict):
                 yield from SloppyTree(v).leaves()
             else:
                 yield v
-    
+
     ###
     # M,N,O
     ###
@@ -448,11 +448,11 @@ class SloppyTree(dict):
         """
 
         curses.start_color()
-        
+
         # Define color pairs
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)  # For root nodes
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # For leaf nodes
-        
+
         root_color = curses.color_pair(1)
         leaf_color = curses.color_pair(2)
         default_color = curses.A_NORMAL  # Default color for branches
@@ -461,16 +461,16 @@ class SloppyTree(dict):
             # Determine if this is the root node or a leaf node
             is_leaf = not isinstance(v, (dict, list))
             color = root_color if depth == 0 else (leaf_color if is_leaf else default_color)
-            
+
             # Determine the appropriate line connector
             is_last = i == len(self) - 1
             connector = L if is_last else T
             stdscr.addstr(depth, 0, prefix + f"{connector}{H}{H} " + str(k), color)
-            
+
             # Prepare new prefix for child nodes
             new_prefix = prefix + ("    " if is_last else f"{I}   ")
             depth += 1
-            
+
             # Recursively handle nested structures
             if isinstance(v, dict):
                 depth = SloppyTree(v).display_tree(stdscr, new_prefix, depth)
@@ -479,7 +479,7 @@ class SloppyTree(dict):
                     is_last_item = idx == len(v) - 1
                     item_connector = L if is_last_item else T
                     item_prefix = new_prefix + ("    " if is_last_item else f"{I}   ")
-                    
+
                     if isinstance(item, dict):
                         depth = SloppyTree(item).display_tree(stdscr, item_prefix, depth)
                     else:
