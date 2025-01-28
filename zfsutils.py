@@ -8,7 +8,7 @@ from   typing import *
 ###
 # Standard imports, starting with os and sys
 ###
-min_py = (3, 11)
+min_py = (3, 8)
 import os
 import sys
 if sys.version_info < min_py:
@@ -18,6 +18,7 @@ if sys.version_info < min_py:
 ###
 # Other standard distro imports
 ###
+from collections.abc import *
 
 ###
 # Installed libraries like numpy, pandas, paramiko
@@ -63,7 +64,7 @@ def get_dataset_info(dataset:str="") -> Union[dict, Generator[dict, None, None]]
         if you are asking about all datasets.
     """
     if not dataset:
-        return (get_dataset_info(dataset) for dataset in list_dataset())
+        return (dataset, get_dataset_info(dataset) for dataset in list_dataset())
 
     result = {}
     for line in dorunrun(f'zfs get -H used,reservation,available {dataset}',
