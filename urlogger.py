@@ -7,7 +7,7 @@ does the logging.
 import typing
 from   typing import *
 
-min_py = (3, 11)
+min_py = (3, 8)
 
 ###
 # Standard imports, starting with os and sys
