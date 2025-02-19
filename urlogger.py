@@ -22,12 +22,18 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 import argparse
-from   collections.abc import *
 import contextlib
 import getpass
+mynetid = getpass.getuser()
 import logging
 from   logging.handlers import RotatingFileHandler
 import pathlib
+
+###
+# From hpclib
+###
+import linuxutils
+from   urdecorators import trap
 
 ###
 # imports and objects that are a part of this project
@@ -41,68 +47,16 @@ __author__ = "George Flanagin"
 __copyright__ = 'Copyright 2023'
 __credits__ = "Ivan Sokolovskii ivan3177@github"
 __version__ = 0.1
-__maintainer__ = ['George Flanagin', 'Joao Tonini']
+__maintainer__ = ['George Flanagin', 'Alina Enikeeva']
 __email__ = ['hpc@richmond.edu']
 __status__ = 'in progress'
 __license__ = 'MIT'
 
-def piddly(s:str) -> str:
-    """
-    A text wrapper for logging the output of multithreaded and
-    multiprocessing programs by including the parent PID in the
-    log message.
-
-    Example: 
-
-        logger=URLogger()
-        logger.info(piddly(msg))
-    """
-
-    return f": {os.getppid()} <- {s}"
-
-
 class URLogger: pass
 
 class URLogger:
-    """
-    This class is a straight-up wrapper around the Python logging module.
-    The logging module has many options, and it is tempting to leave them
-    out because it requires extra lines of code. This class supports
-    several features that simplify the operation of logging.
-
-    Basic operation:
-
-    [1] At the global scope in the module containing your program's 
-        entry point (__main__), define the logger:
-
-        logger = None
-
-    [2] Sometime/somewhere soon thereafter, define it appropriately.
-
-        logger = URLogger(logfile='/path/to/logfile', level=30)
-
-        The levels are defined by symbols in Python's logging module. If 
-        you do not supply logfile and level, the logfile is named "thisprog.log"
-        in $PWD, and the level is set to logging.INFO.
-
-    [3] Invoke the level of message you want to use by using one of the
-        class members.
-
-        logger.error("Something really bad has happened.")
-
-        The log rotation and formatting is taken care of behind the scene. 
-        The default format shows the time, the PID, the module, and the function that
-            created the message.
-
-    [4] There are some additional conveniences.
-
-        The name of the logfile can be retrieved with str(logger).
-        The current logging level can be retrieved with int(logger).
-        The logging level can be [re]set with logger(newlevel).
-
-    """
-
     __slots__ = {
+        'directory': 'directory with the log files',
         'logfile': 'the logfile associated with this object',
         'formatter': 'format string for the logging records.', 
         'level': 'level of the logging object',
@@ -110,9 +64,10 @@ class URLogger:
         'thelogger': 'the logging object this class wraps'
         }
 
-    __values__ = (
-        None,
-        logging.Formatter('#%(levelname)-8s [%(asctime)s] (%(process)d %(module)s %(funcName)s: %(message)s)'),
+    __values__ = ('/var/log/URLogger', 
+        '/var/log/URLogger/log.log', 
+        logging.Formatter('#%(levelname)-8s [%(asctime)s] (%(process)d) %(module)s: %(message)s'),
+        False,
         logging.WARNING,
         None,
         None)
@@ -131,15 +86,18 @@ class URLogger:
                 setattr(self, k, v)
         
         try:
-            if self.logfile is None:
-                self.logfile=os.path.join(os.getcwd(), "thisprog.log")
-            pathlib.Path(self.logfile).touch(mode=0o644, exist_ok=True)
-
-        except Exception as e:
-            sys.stderr.write(f"Cannot create or open {self.logfile}. {e}\n")
+            os.makedirs(self.directory, mode=0o755, exist_ok=True)
+        except PermissionError as e:
+            sys.stderr.write(f"Cannot access {self.directory}\n")
             raise e from None
 
-        self.rotator = RotatingFileHandler(self.logfile, maxBytes=1<<24, backupCount=2)
+        # log warnings to warning log file. 
+        try:
+            pathlib.Path(self.logfile).touch(mode=0o644, exist_ok=True)
+            self.rotator = RotatingFileHandler(self.logfile, maxBytes=1<<24, backupCount=2)
+        except Exception as e:
+            sys.stderr.write(f"Unable to create or open {self.logfile}")
+            raise e from None
             
         self.rotator.setLevel(self.level)
         self.rotator.setFormatter(self.formatter)
@@ -153,9 +111,7 @@ class URLogger:
     ###
     # These properties provide an interface to the built-in
     # logging functions as if the class member, self.thelogger,
-    # were exposed. It is a little used "property" of Python that
-    # the @property decorator can be used to return a function as
-    # well as the more common case of a data member. 
+    # were exposed. 
     ###
     @property
     def debug(self) -> object:
@@ -182,16 +138,12 @@ class URLogger:
     # Tinker with the object model a little bit.
     ###
     def __str__(self) -> str:
-        """ 
-        return the name of the logfile. 
-        """
+        """ return the name of the logfile. """
         return self.logfile
 
 
     def __int__(self) -> int:
-        """ 
-        return the current level of logging. 
-        """
+        """ return the current level of logging. """
         return self.level
 
 
@@ -216,7 +168,6 @@ if __name__ == '__main__':
     logger.info('This is purely informational') 
     logger.debug('This is a debug message.')
     logger.critical('This is *CRITICAL*')
-    logger.error(piddly('This is an ERROR and includes the PPID'))
 
     with open(str(logger)) as f:
         { print(_) for _ in f.readlines() }

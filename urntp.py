@@ -3,10 +3,6 @@
 A way to compare time across machines.
 """
 
-import os
-import sys
-
-
 import math
 import socket
 import struct

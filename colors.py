@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-BashColors = {}
+import linuxutils
+
+BashColors = linuxutils.SloppyDict()
 
 BashColors['LIGHT_BLUE']="\033[1;34m"
 BashColors['BLUE']= '\033[94m'
@@ -18,3 +20,5 @@ units = {
     }
 
 
+def DoF(dist:float, f:float, n:float, unit:str='cm'):
+    return 2 * units[unit] * dist * dist * n * 0.00003 / (f/1000) 

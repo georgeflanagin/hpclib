@@ -9,8 +9,8 @@ and provide a stack unwind and dump.
 from urdecorators import show_exceptions_and_frames as trap
 # from urdecorators import null_decorator as trap
 
-In production, we can swap the commented line for the one
-preceding it.
+In production, we can swap the commented line for the one 
+preceding it. 
 
 """
 import os
@@ -28,17 +28,15 @@ import contextlib
 import datetime
 from   functools import wraps
 import inspect
-from   multiprocessing.managers import BaseManager
-import threading
 
 ###
 # An optional import for better printing.
 ###
 try:
     from tabulate import tabulate
-    have_tabulate = True
+    use_tabulate = True
 except ImportError as e:
-    have_tabulate = False
+    use_tabulate = False
 
 
 
@@ -66,19 +64,19 @@ def printvars(f_locals:dict) -> None:
     available, we can print a nice looking table.
     """
 
-    global have_tabulate
-    if have_tabulate:
+    global use_tabulate
+    if use_tabulate:
         ###
         # Note: if tabulate doesn't work or cannot handle
         # our data, then we want to print something. Note
-        # that if the try/except has no problem, this
+        # that if the try/except has no problem, this 
         # function returns. Otherwise, it prints the
-        # stack frame more crudely, w/o formatting.
+        # stack frame more crudely, w/o formatting. 
         ###
         as_list = [ [k, v] for k, v in f_locals.items() ]
         try:
-            print(tabulate(as_list,
-                headers=['object', 'type', 'value'],
+            print(tabulate(as_list, 
+                headers=['object', 'value'], 
                 tablefmt='orgtbl'))
 
         except:
@@ -88,7 +86,7 @@ def printvars(f_locals:dict) -> None:
 
     for k, v in f_locals.items():
         try:
-            print(f'    {k} = {str(v)}')
+            print(f'    {k} = {v}')
         except:
             print(f"Unable to print the value of {k}")
 
@@ -106,7 +104,7 @@ def show_exceptions_and_frames(func:object) -> None:
         # the stack to this function. Clearly, we have gone far enough,
         # and we can stop.
         __wrapper_marker_local__ = None
-
+    
         try:
             # If you want to get a flow trace, uncomment the next
             # line, and you will get the name of each function called
@@ -127,11 +125,11 @@ def show_exceptions_and_frames(func:object) -> None:
             new_dir = os.path.join(os.getcwd(), today)
             os.makedirs(new_dir, exist_ok=True)
 
-            # The file name will be the pid under the $PWD/today's-date
+            # The file name will be the pid under the $PWD/today's-date 
             # directory.
             candidate_name = os.path.join(new_dir, pid)
-
-            sys.stderr.write(f"writing dump to file {candidate_name}\n")
+            
+            sys.stderr.write(f"writing dump to file {candidate_name}")
 
             with open(candidate_name, 'a') as f:
                 with contextlib.redirect_stdout(f):
@@ -142,12 +140,12 @@ def show_exceptions_and_frames(func:object) -> None:
                         print(f"Exception while unwinding the stack: {e}")
 
                     print(f'Exception raised {e_type}: "{e_val}"')
-
+                    
                     # iterate through the frames in reverse order so we print the
                     # most recent frame first
                     for frame_info in inspect.getinnerframes(e_trace):
                         f_locals = frame_info[0].f_locals
-
+                
                         # if there's a local variable named __wrapper_marker_local__, we assume
                         # the frame is from a call of this function, 'wrapper', and we skip
                         # it. The problem happened before the dumping function was called.
@@ -167,60 +165,6 @@ def show_exceptions_and_frames(func:object) -> None:
 
 # trap = null_decorator
 trap = show_exceptions_and_frames
-
-
-def singleton(cls):
-    """
-    This decorator creates a thread-safe singleton
-    instance of a class. As a class decorator that
-    insures uniqueness, it should precede other
-    decorators.
-
-    Note that this prevents thread races within the same
-    process, but does not affect multiprocessing
-    environments.
-    """
-    instances = {}
-    lock = threading.Lock()
-
-    def get_instance(*args, **kwargs):
-        if cls not in instances:
-            with lock:
-                # Make sure the some other thread did not
-                # add this class.
-                if cls not in instances:
-                    instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return get_instance
-
-
-
-class SingletonManager(BaseManager): pass
-
-def multiprocess_singleton(cls):
-    """
-    This decorator uses the multiprocessing module to create
-    a singleton that spans multiple processes. In cases where
-    you need both thread safety and multiprocess safety, wrap
-    the class this way:
-
-    @singleton
-    @multiprocess_singleton
-    class X:
-        pass
-
-    """
-    def get_instance():
-        m = SingletonManager()
-        m.start()
-        m.register(cls.__name__, cls)
-        instance = getattr(m, cls.__name__)()
-        return instance
-
-    return get_instance
-
-
 
 if __name__=="__main__":
 

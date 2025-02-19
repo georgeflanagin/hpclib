@@ -5,9 +5,6 @@
 import typing
 from typing import *
 
-import os
-import sys
-
 # Credits
 __longname__ = "University of Richmond"
 __acronym__ = " UR "

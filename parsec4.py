@@ -96,8 +96,6 @@ LBRACE  = '{'
 RBRACE  = '}'
 LBRACK  = '['
 RBRACK  = ']'
-LPAREN  = '('
-RPAREN  = ')'
 COLON   = ':'
 COMMA   = ','
 SEMICOLON   = ';'
@@ -1331,12 +1329,6 @@ def quoted() -> str:
     body = yield many(charseq())
     yield quote
     raise EndOfGenerator(''.join(body))
-
-@lexeme
-@generate
-def everything() -> str:
-    chars = yield many(charseq())
-    raise EndOfGenerator(''.join(chars))
 
 
 def parser_from_strings(s:Union[str, Iterable], 
