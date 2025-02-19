@@ -35,7 +35,6 @@ class NIST_Beacon2:
 
     raises Exception if curl is not available.
     """
-
     def __init__(self, secure:bool=False):
         """
         set up the class.

@@ -20,6 +20,7 @@ from   collections.abc import *
 import contextlib
 import getpass
 import logging
+from   logging import CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
 
 ###
 # Installed libraries like numpy, pandas, paramiko
@@ -71,10 +72,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="skel", 
         description="What skel does, skel does best.")
 
-    parser.add_argument('--loglevel', type=int, 
-        choices=range(logging.FATAL, logging.NOTSET, -10),
-        default=logging.DEBUG,
-        help=f"Logging level, defaults to {logging.DEBUG}")
+    parser.add_argument('--log-level', type=int, default=INFO,
+        choices=(CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET),
+        help=f"Logging level, defaults to {logging.INFO}")
 
     parser.add_argument('-o', '--output', type=str, default="",
         help="Output file name")
@@ -83,6 +83,13 @@ if __name__ == '__main__':
         help="Remove old log file and create a new one.")
 
     myargs = parser.parse_args()
+    if myargs.zap:
+        try:
+            unlink(logfile)
+        except:
+            pass
+
+
     logger = URLogger(logfile=logfile, level=myargs.loglevel)
 
     try:
