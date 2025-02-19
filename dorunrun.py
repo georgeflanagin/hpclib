@@ -60,7 +60,8 @@ __license__ = 'MIT'
 
 def dorunrun(command:Union[str, list],
     timeout:int=None,
-    return_datatype:type=dict) -> Union[str, bool, int, dict]:
+    return_datatype:type=dict,
+    OK_values:Iterable = (0,)) -> Union[str, bool, int, dict]:
     """
     A wrapper around (almost) all the complexities of running child
         processes.
@@ -79,6 +80,9 @@ def dorunrun(command:Union[str, list],
         - dict : everything as a dict of key-value pairs.
 
         The default data type is dict
+    OK_values: By default, OK means zero. However, the caller can supply a group
+        of codes that are interpreted as being acceptable.
+
     ----------
     Returns: A value corresponding to the requested info.
     """
@@ -106,9 +110,8 @@ def dorunrun(command:Union[str, list],
             stderr=subprocess.PIPE,
             text=True,
             shell=False)
-        code = result.returncode
-        b_code = code == 0
-        i_code = code
+        i_code = code = result.returncode
+        b_code = code in OK_values
         s = result.stdout[:-1] if result.stdout.endswith('\n') else result.stdout
         e = result.stderr[:-1] if result.stderr.endswith('\n') else result.stderr
 
