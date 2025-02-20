@@ -14,7 +14,9 @@ import paramiko
 
 import fileutils
 from   sloppytree import SloppyTree
+from   urdecorators import trap
 
+@trap
 def get_ssh_host_info(host_name:str=None, config_file:str=None) -> List[Dict]:
     """ Utility function to get all the ssh config info, or just that
     for one host.
@@ -25,8 +27,8 @@ def get_ssh_host_info(host_name:str=None, config_file:str=None) -> List[Dict]:
         config file is used.
     """
 
-    if config_file is None:
-        config_file = fileutils.expandall("~/.ssh/config")
+    config_file = config_file if config_file else '~/.ssh/config'
+    config_file = fileutils.expandall(config_file)
     if not os.path.exists(config_file):
         return [{}]
 
