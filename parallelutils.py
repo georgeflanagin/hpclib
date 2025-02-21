@@ -22,8 +22,6 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 from   collections.abc import *
-import logging
-import tomllib
 
 ###
 # Installed libraries like numpy, pandas, paramiko
@@ -34,7 +32,6 @@ import tomllib
 ###
 from   dorunrun import dorunrun
 import fileutils
-import linuxutils
 from   sloppytree import SloppyTree
 from   urdecorators import trap
 from   urlogger import URLogger
