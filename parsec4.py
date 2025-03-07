@@ -16,7 +16,7 @@ from   typing import *
 #  Added a __bool__ function to the Value class.
 #  Changed some string searches to exploit constants in string module rather
 #   than str functions that might be affected by locale.**
-#  Changed name of any() function to any_char() to avoid conflicts with 
+#  Changed name of any() function to any_char() to avoid conflicts with
 #   Python built-in of the same name.
 #  Where practical, f-strings are used for formatting.
 #  Revised for modern Python; no longer compatible with Python 2. This version
@@ -24,14 +24,14 @@ from   typing import *
 #  A number of definitions of characters are provided, and they
 #   are named as standard symbols: TAB, NL, CR, etc.
 #  Many custom parsers are likely to include parsers for common programming
-#   elements (dates, IP addresses, timestamps). These are now included. 
+#   elements (dates, IP addresses, timestamps). These are now included.
 #  There are two versions of the `string` parser. The new version consumes
 #   no input on failure. The older version can be activated by defining
-#   the environment variable PARSEC3_STRING. The value is unimportant; it 
+#   the environment variable PARSEC3_STRING. The value is unimportant; it
 #   only needs to be defined.
 #
-# ** A note on the use of the import statement. The import near the top of the 
-#    file imports string, and creates an entry in the system modules table 
+# ** A note on the use of the import statement. The import near the top of the
+#    file imports string, and creates an entry in the system modules table
 #    named 'string'. The use of the import statement inside the parser functions
 #    merely references this already imported module's index in the sys.modules
 #    table.
@@ -111,7 +111,7 @@ EMPTY_STR   = ""
 SLASH   = '/'
 PLUS    = '+'
 MINUS   = '-'
-STAR    = '*'    
+STAR    = '*'
 EQUAL   = '='
 DOLLAR  = '$'
 AT_SIGN = '@'
@@ -177,7 +177,7 @@ class ParseError(RuntimeError):
 class Value: pass
 class Value(namedtuple('Value', 'status index value expected')):
     """
-    Value represents the result of the Parser. namedtuple is a little bit of 
+    Value represents the result of the Parser. namedtuple is a little bit of
     difficult beast, adding as much syntactic complexity as it removes.
 
     Here the types are:
@@ -218,8 +218,8 @@ class Value(namedtuple('Value', 'status index value expected')):
         """
         Change the index, and return a new object.
         """
-        return ( self 
-            if index is None else 
+        return ( self
+            if index is None else
                 Value(self.status, index, self.value, self.expected)
                 )
 
@@ -273,7 +273,7 @@ class Parser:
 
     def __init__(self, fn:Callable):
         '''
-        fn -- is the function to wrap. 
+        fn -- is the function to wrap.
         '''
         self.fn = fn
 
@@ -298,7 +298,7 @@ class Parser:
 
         Return a tuple of the result value and the rest of the string.
 
-        If failed, raise a ParseError. 
+        If failed, raise a ParseError.
         '''
         result = self(text, 0)
         if result.status:
@@ -309,7 +309,7 @@ class Parser:
 
     def parse_strict(self, text:str) -> Value:
         '''
-        Parse the longest possible prefix of the entire given string. If the 
+        Parse the longest possible prefix of the entire given string. If the
         parser worked successfully and NONE text was rested, return the
         result value, else raise a ParseError.
 
@@ -326,7 +326,7 @@ class Parser:
         '''
         This is the monadic binding operation. Returns a parser which, if
         parser is successful, passes the result to fn, and continues with the
-        parser returned from fn. 
+        parser returned from fn.
         '''
 
         @Parser
@@ -393,7 +393,7 @@ class Parser:
     def skip(self, other:Parser) -> Value:
         '''
         (<<) Ends with a specified parser, discarding any result from
-        the parser on the RHS. Typical uses might be discarding 
+        the parser on the RHS. Typical uses might be discarding
         whitespace that follows a parsed token:
 
         a_parser << whitespace_parser
@@ -467,7 +467,7 @@ class Parser:
 
     def parsecapp(self, other:Parser) -> Parser:
         '''
-        Returns a parser that applies the produced value of this parser 
+        Returns a parser that applies the produced value of this parser
         to the produced value of `other`.
         '''
         return self.bind(
@@ -554,8 +554,8 @@ class Parser:
 
 
 ###
-# SECTION 4: In this section, along with parse(), we have some of 
-# the class member functions exposed to the outside primarily for 
+# SECTION 4: In this section, along with parse(), we have some of
+# the class member functions exposed to the outside primarily for
 # notational flexibility.
 ##
 
@@ -685,7 +685,7 @@ def try_choice(pa:Parser, pb:Parser) -> Parser:
 #
 # For an explanation of the .send() protocol, see the text in section 6.2.9.1
 # of the official Python documentation.
-# 
+#
 #     https://docs.python.org/3/reference/expressions.html
 ##########################################################################
 
@@ -741,13 +741,13 @@ def times(p:Parser, min_times:int, max_times:int=0) -> list:
     '''
     Repeat a parser between min_times and max_times
     Execute it, and return a list containing whatever
-    was collected. 
+    was collected.
     '''
-    
+
     max_times = min_times if not max_times else max_times
     @Parser
     def times_parser(text:str, index:int) -> Parser:
-        
+
         cnt, values, res = 0, [], None
         while cnt < max_times:
             res = p(text, index)
@@ -827,7 +827,7 @@ def many1(p:Parser) -> list:
     return times(p, 1, sys.maxsize)
 
 ###
-# NOTE: the following parsers are useful for expressions in 
+# NOTE: the following parsers are useful for expressions in
 # a language that appear like this: a, b, c, d
 # Most languages have these.
 ###
@@ -1007,7 +1007,7 @@ def spaces() -> Parser:
 
 def letter() -> Parser:
     """
-    Parse a character that Unicode understands to be a 
+    Parse a character that Unicode understands to be a
     Letter type, Lm, Lt, Lu, Ll, or Lo
     """
     @Parser
@@ -1027,7 +1027,7 @@ def ascii_letter() -> Parser:
 
     @Parser
     def ascii_letter_parser(text:str, index:int=0) -> Parser:
-        
+
         c = text.get(index)
         if c is not None and (c.islower() or c.isupper()):
             return Value.success(index + 1, text[index])
@@ -1039,7 +1039,7 @@ def ascii_letter() -> Parser:
 
 def digit() -> Parser:
     '''
-    Parse a digit. 
+    Parse a digit.
     '''
     @Parser
     def digit_parser(text:str, index=0):
@@ -1076,7 +1076,7 @@ def regex(exp:str, flags:int=0) -> Parser:
     @Parser
     def regex_parser(text:str, index:int) -> Parser:
         if not isinstance(text, str):
-            return Value.failure(index, 
+            return Value.failure(index,
                 "`regex` combinator only accepts string as input, " +
                 f"but got type {type(text)}, value is {text}")
 
@@ -1102,6 +1102,7 @@ lexeme      = lambda p: p << WHITESPACE
 # Either "0" or something that starts with a non-zero digit, and may
 # have other digits following.
 DIGIT_STR   = regex(r'(0|[1-9][\d]*)')
+DIGIT_STR_Z = regex(r'([0-9][\d]*)')
 digit_str   = lexeme(DIGIT_STR)
 
 # HEX numbers are allowed to start with zero.
@@ -1135,7 +1136,7 @@ us_phone    = lexeme(US_PHONE)
 ###
 # This is He Tao's original string parser. If the first n-characters of
 # of the text matches and n < len(text), it advances the index by n *and*
-# it returns a Value.failure. 
+# it returns a Value.failure.
 ###
 def string_parsec3(s):
     '''Parses a string.'''
@@ -1192,7 +1193,7 @@ def fix(fn:Callable) -> Parser:
     '''
     Allow recursive parser using the Y combinator trick.
 
-        Note that this version still yields the stack overflow 
+        Note that this version still yields the stack overflow
         problem, and will be fixed in later version.
 
        See also: https://github.com/sighingnow/parsec.py/issues/39.
@@ -1231,7 +1232,7 @@ def lookahead(p: Parser) -> Parser:
 
 def unit(p: Parser) -> Parser:
     '''
-    Converts a parser into a single unit. Only consumes input if 
+    Converts a parser into a single unit. Only consumes input if
     the parser succeeds
     '''
     @Parser
@@ -1339,29 +1340,29 @@ def everything() -> str:
     raise EndOfGenerator(''.join(chars))
 
 
-def parser_from_strings(s:Union[str, Iterable], 
+def parser_from_strings(s:Union[str, Iterable],
     cmap:Union[str, Callable]=None) -> Parser:
     """
     Factory for string parsers. NOTE that this function is not
-        itself a Parser, but returns a Parser object joined 
+        itself a Parser, but returns a Parser object joined
         with the try-choice operator (^).
 
     s -- an iterable of strings, or a whitespace delimited string of text.
-    
+
     cmap -- an optional callable to be used as the argument to .parsecmap().
-        If called with a str, the argument is accepted without comment or 
-        checking. If it is a callable, an exception is raised if the 
-        callable is nameless or has a name that cannot be determined 
-        programmatically. 
+        If called with a str, the argument is accepted without comment or
+        checking. If it is a callable, an exception is raised if the
+        callable is nameless or has a name that cannot be determined
+        programmatically.
 
         It is worth noting that the name of a callable such as str.lower
         is "lower" although the name of int is "int". In the first
-        case, you would want to use "str.lower". 
+        case, you would want to use "str.lower".
 
-    returns -- a Parser that tries all the strings non-destructively, and 
-        vacuums up any trailing whitespace. The sub-parsers are tried 
+    returns -- a Parser that tries all the strings non-destructively, and
+        vacuums up any trailing whitespace. The sub-parsers are tried
         deterministically in the order in which they appear in the argument
-        to the factory function. 
+        to the factory function.
 
     NOTE: this factory will work with Parsec3 or Parsec4 strings.
     """
@@ -1379,5 +1380,5 @@ def parser_from_strings(s:Union[str, Iterable],
         cmap = str(cmap)
 
     return eval(" ^ ".join([ f"lexeme(string('{_}').parsecmap({cmap}))" for _ in s ]))
-        
+
 
