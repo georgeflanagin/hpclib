@@ -648,7 +648,7 @@ def snooze(n: int, num_retries: int = 10, delay: float = 10, scaling: float = 1.
         yield nap
 
 
-def splitter(group:Iterable, num_chunks:int) -> Iterable:
+def splitter(group:Iterable, num_chunks:int) -> Iterator:
     """
     Generator to divide a collection into num_chunks pieces.
     It works with str, tuple, list, and dict, and the return
@@ -662,19 +662,17 @@ def splitter(group:Iterable, num_chunks:int) -> Iterable:
             ... do something with chunk ...
     """
 
-    quotient, remainder = divmod(len(group), num_chunks)
+    quotient, remainder = divmod(min(len(group), num_chunks), num_chunks)
     is_dict = isinstance(group, dict)
     if is_dict:
-        group = tuple(kvpair for kvpair in group.items())
+        group = tuple(group.items())
 
     for i in range(num_chunks):
         lower = i*quotient + min(i, remainder)
         upper = (i+1)*quotient + min(i+1, remainder)
+        slice_ = group[lower:upper]
 
-        if is_dict:
-            yield {k:v for (k,v) in group[lower:upper]}
-        else:
-            yield group[lower:upper]
+        yield dict(slice_) if is_dict else type(group)(slice_)
 
 
 def squeal(s: str=None, rectus: bool=True, source=None) -> str:
