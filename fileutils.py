@@ -112,6 +112,16 @@ def all_files_not_like(d:str, partial_name:str) -> str:
     yield from ( f for f in all_files_in(d) if partial_name not in f )
 
 
+def all_filtered_files(d:str, filter:dict) -> tuple:
+    """
+    Apply the rules in filter to the file.
+    """
+    include_hidden = filter.pop('hidden', False)
+    for f in all_files_in(d, include_hidden):
+        stats = os.stat(f)
+
+
+
 def all_module_files() -> str:
     """
     This generator locates all module files that are located in
@@ -228,6 +238,90 @@ def fclose_all() -> None:
         except:
             continue
 
+
+filetypes = {
+    b"%PDF-1." : "PDF",
+    b"#%Module" : "MOD",
+    b"BZh91A" : "BZ2",
+    bytes.fromhex("FF454C46") : "ELF",
+    bytes.fromhex("1F8B") : "GZIP",
+    bytes.fromhex("FD377A585A00") : "XZ",
+    bytes.fromhex("504B0304") : "ZIP",
+    bytes.fromhex("504B0708") : "ZIP"
+    }
+
+
+os_FILETYPES = {
+    stat.S_IFDIR: "d",
+    stat.S_IFREG: "f",
+    stat.S_IFLNK: "l",
+    stat.S_IFCHR: "c",
+    stat.S_IFBLK: "b",
+    stat.S_IFIFO: "p",
+    stat.S_IFSOCK: "s"
+}
+
+
+@dataclass(slots=True, frozen=True)
+class FILE_DATA:
+    """
+    dataclass originally created to accelerate de-duping.
+
+    Let's say our files are f1 and f2.
+
+    f1 == f2 is true if the inodes are the same.
+    f1 @ f2 is true if
+        [1] f1 == f2 .. or ..
+        [2] the sizes and basenames are the same.
+
+    """
+    name:       str
+    inodedata:  os.stat_result
+
+
+    def __eq__(self, other:FILE_DATA) -> bool:
+        if not isinstance(other, FILE_DATA): return NotImplemented
+
+        # Two files with the same inode are the same file. This
+        # function effectively works like "is".
+        return self.inodedata.st_ino == other.inodedata.st_ino
+
+    def __ne__(self, other:FILE_DATA) -> bool:
+        if not isinstance(other, FILE_DATA): return NotImplemented
+        return self.inodedata.st_ino != other.inodedata.st_ino
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __str__(self) -> str:
+        """
+        This is what most people mean by the name.
+        """
+        return os.path.basename(self.name)
+
+
+    def __repr__(self) -> str:
+        return self.name
+
+
+    def __matmul__(self, other:FILE_DATA) -> bool:
+        """
+
+        """
+        if not isinstance(other, FILE_DATA): return NotImplemented
+        if self == other: return True
+
+        if self.inodedata.st_size != other.inodedata.st_size: return False
+        return str(self) == str(other)
+
+
+    def __int__(self) -> int:
+        """
+        If the object is a file, return the hash of its contents
+        as an int.
+        """
+
+
 ####
 # G
 ####
@@ -241,19 +335,6 @@ def get_file_page(path:str,num_bytes:int=resource.getpagesize()) -> str:
     """
     with open(path,'rb') as z:
         return z.read(num_bytes)
-
-
-
-filetypes = {
-    b"%PDF-1." : "PDF",
-    b"#%Module" : "MOD",
-    b"BZh91A" : "BZ2",
-    bytes.fromhex("FF454C46") : "ELF",
-    bytes.fromhex("1F8B") : "GZIP",
-    bytes.fromhex("FD377A585A00") : "XZ",
-    bytes.fromhex("504B0304") : "ZIP",
-    bytes.fromhex("504B0708") : "ZIP"
-    }
 
 
 def get_file_type(path:str) -> str:
@@ -424,6 +505,24 @@ def make_dir_or_die(dirname:str, mode:int=0o700) -> None:
 ####
 # P
 ####
+
+def parse_st_mode(mode:int) -> tuple:
+    """
+    Parse the information packed into st_mode.
+
+    mode -- the numeric value of os.stat().st_mode
+
+    returns -- (filetype, permissions)
+    """
+    global os_FILETYPES
+
+    # File type
+    ftype = os_FILETYPES.get(mode, '?')
+    permissions=stat.S_IMODE(mode)
+    octal_str = format(permissions, "04o")
+
+    return (ftype, permissions, octal_str)
+
 
 def path_join(dir_part:str, file_part:str) -> str:
     """
