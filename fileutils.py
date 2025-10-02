@@ -16,45 +16,34 @@ if sys.version_info < min_py:
 # Other standard distro imports
 ###
 import argparse
+import base64
 from   collections.abc import *
 import contextlib
-import getpass
-import logging
+import fcntl
+from   functools import cached_property
+import hashlib
+import pickle
+import random
+import resource
+import stat
+import subprocess
+import tempfile
+
+# Choose an algorithm for the hashing. xxhash is generally the
+# fastest, and blake2b is
+try:
+    import xxhash
+    hash_foo = xxhash.xxh64
+except:
+    hash_foo = hashlib.new("blake2b")
 
 ###
 # Installed libraries like numpy, pandas, paramiko
 ###
 
 ###
-# From hpclib
-###
-import linuxutils
-from   urdecorators import trap
-from   urlogger import URLogger
-
-###
-# imports and objects that were written for this project.
-###
-import base64
-import calendar
-import fcntl
-import fnmatch
-import getpass
-import glob
-import pickle
-import random
-import re
-import resource
-import stat
-import subprocess
-import sys
-import tempfile
-
-###
 # Global objects
 ###
-mynetid = getpass.getuser()
-logger = None
 
 ###
 # Credits
@@ -263,7 +252,7 @@ os_FILETYPES = {
 
 
 @dataclass(slots=True, frozen=True)
-class FILE_DATA:
+class FileRef:
     """
     dataclass originally created to accelerate de-duping.
 
@@ -279,19 +268,22 @@ class FILE_DATA:
     inodedata:  os.stat_result
 
 
-    def __eq__(self, other:FILE_DATA) -> bool:
-        if not isinstance(other, FILE_DATA): return NotImplemented
+    def __eq__(self, other:FileRef) -> bool:
+        if not isinstance(other, FileRef): return NotImplemented
 
         # Two files with the same inode are the same file. This
         # function effectively works like "is".
         return self.inodedata.st_ino == other.inodedata.st_ino
 
-    def __ne__(self, other:FILE_DATA) -> bool:
-        if not isinstance(other, FILE_DATA): return NotImplemented
+
+    def __ne__(self, other:FileRef) -> bool:
+        if not isinstance(other, FileRef): return NotImplemented
         return self.inodedata.st_ino != other.inodedata.st_ino
+
 
     def __hash__(self) -> int:
         return hash(self.name)
+
 
     def __str__(self) -> str:
         """
@@ -304,14 +296,19 @@ class FILE_DATA:
         return self.name
 
 
-    def __matmul__(self, other:FILE_DATA) -> bool:
+    def __matmul__(self, other:FileRef) -> bool:
         """
 
         """
-        if not isinstance(other, FILE_DATA): return NotImplemented
+        if not isinstance(other, FileRef): return NotImplemented
+
+        # are they the same inode (the same file)
         if self == other: return True
 
+        # If they are different sizes, they cannot be the same.
         if self.inodedata.st_size != other.inodedata.st_size: return False
+
+        # So, same size, same base name.
         return str(self) == str(other)
 
 
@@ -320,6 +317,8 @@ class FILE_DATA:
         If the object is a file, return the hash of its contents
         as an int.
         """
+
+
 
 
 ####
