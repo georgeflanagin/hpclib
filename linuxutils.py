@@ -237,7 +237,7 @@ def cpucounter() -> int:
 ###
 # D
 ###
-def daemonize_me() -> bool:
+def daemonize_me(home:str='/') -> bool:
     """
     Turn this program into a daemon, if it is not already one.
     """
@@ -251,7 +251,7 @@ def daemonize_me() -> bool:
         print(f"Fork failed. {e.error} = {e.strerror}")
         sys.exit(os.EX_OSERR)
 
-    os.chdir("/")
+    os.chdir(home)
     os.setsid()
     os.umask(0)
 

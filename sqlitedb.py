@@ -6,7 +6,7 @@
 
 
 #pragma pylint=off
-    
+
 # Credits
 __author__ =        'George Flanagin'
 __copyright__ =     'Copyright 2017 George Flanagin'
@@ -40,15 +40,15 @@ from urdecorators import trap
 class SQLiteDB:
     """
     Basic functions for manipulating all sqlite3 databases. Here is
-    a summary of the keyword options:   
+    a summary of the keyword options:
 
-    timeout -- a number of seconds to wait for anything that is 
+    timeout -- a number of seconds to wait for anything that is
         waitable. A connection, a commit, etc. (default:15)
 
     isolation_level -- one of EXCLUSIVE, DEFERRED, IMMEDIATE as defined
         in the documentation at sqlite.org. (default:DEFERRED)
 
-    use_pandas -- if True, and pandas is installed, the results of 
+    use_pandas -- if True, and pandas is installed, the results of
         all SELECT operations will be returned in a pandas.DataFrame.
         (default:True)
 
@@ -57,7 +57,7 @@ class SQLiteDB:
         came from. (default:False)
     """
 
-    __slots__ = ( 'stmt', 'OK', 'db', 'cursor', 
+    __slots__ = ( 'stmt', 'OK', 'db', 'cursor',
         'timeout', 'isolation_level', 'name', 'use_pandas', 'to_RAM', 'lock' )
     __values__ = ( '', False, None, None,
         15, 'DEFERRED', '', True, False, multiprocessing.RLock() )
@@ -80,13 +80,13 @@ class SQLiteDB:
             return
 
         # Override the defaults if needed.
-        for k, v in kwargs.items(): 
+        for k, v in kwargs.items():
             if k in SQLiteDB.__slots__:
                 setattr(self, k, v)
 
         error_on_init = True
         try:
-            self.db = sqlite3.connect(self.name, 
+            self.db = sqlite3.connect(self.name,
                 timeout=self.timeout, isolation_level=self.isolation_level)
 
             if self.to_RAM:
@@ -94,14 +94,14 @@ class SQLiteDB:
                 self.db.backup(memDB, pages=0, progress=None)
                 self.db.close()
                 self.db = memDB
-                
+
             self.cursor = self.db.cursor()
             self.keys_on()
             error_on_init = False
 
         except sqlite3.OperationalError as e:
             sys.stderr.write(str(e))
-            
+
         finally:
             self.OK = not error_on_init
 
@@ -114,7 +114,7 @@ class SQLiteDB:
 
     def __bool__(self) -> bool:
         """
-        We consider everything "OK" if the object is attached to an open 
+        We consider everything "OK" if the object is attached to an open
         database, and the last operation went well.
         """
         return self.db is not None and self.OK
@@ -149,8 +149,8 @@ class SQLiteDB:
         if not os.path.exists(self.name): return -1
 
         return max(len(dorunrun(f"lsof {self.name}", return_datatype=str).split()) - 1, 0)
-        
-    
+
+
     def __invert__(self) -> int:
         """
         Syntax sugar to allow a reference to the number of
@@ -174,7 +174,7 @@ class SQLiteDB:
     def close(self) -> bool:
         """
         close the database, carefully copying a memory
-        resident database to disc. 
+        resident database to disc.
         """
 
         # Commit any pending transactions.
@@ -207,10 +207,10 @@ class SQLiteDB:
                 os.link(temp_db_name, self.name)
 
             except Exception as e:
-                print(f"Exception raised saving in-memory database.\n{e=}")  
+                print(f"Exception raised saving in-memory database.\n{e=}")
                 raise
 
-            else:   
+            else:
                 return True
 
             finally:
@@ -235,7 +235,7 @@ class SQLiteDB:
     def executemany_SQL(self, SQL:str, datasource:Iterable) -> int:
         """
         Wrapper for multiple INSERT and UPDATE statements that provides
-        a correctly constructed transaction/rollback. The datasource 
+        a correctly constructed transaction/rollback. The datasource
         can be a pandas DataFrame if pandas is present.
 
         returns -- the number of rows affected.
@@ -252,35 +252,35 @@ class SQLiteDB:
         except:
             self.cursor.execute('ROLLBACK;')
         finally:
-            return i            
+            return i
 
 
     #@trap
     def execute_SQL(self, SQL:str, *args, **kwargs) -> object:
         """
-        Wrapper that automagically returns rowsets for SELECTs and 
+        Wrapper that automagically returns rowsets for SELECTs and
         number of rows affected for other DML statements.
-        
+
         is_select        -- if we think it is a SELECT statement.
         has_args         -- to avoid the problem with the None-tuple.
         self.use_pandas  -- iff True, return a DataFrame on SELECT statements.
 
-        """ 
+        """
         global we_have_pandas
-       
+
         docommit = kwargs.get('transaction') is None
         is_select = SQL.strip().lower().startswith('select')
         has_args = not not args
 
         if we_have_pandas and self.use_pandas and is_select:
             return pandas.read_sql_query(SQL, self.db, *args)
-        
+
         if has_args:
             rval = self.cursor.execute(SQL, args)
         else:
             rval = self.cursor.execute(SQL)
 
-        if is_select: 
+        if is_select:
             return rval.fetchall()
         docommit and self.commit()
         return rval
@@ -290,10 +290,10 @@ class SQLiteDB:
     def row_one(self, SQL:str, parameters:Union[tuple, None]=None) -> dict:
         """
         Return only the first row of the results. When returned,
-        it will not be a list with one row, but just the row 
+        it will not be a list with one row, but just the row
         itself. If the column is provided, then only that column
         is returned as an atomic datum.
         """
-       
+
         results = self.execute_SQL(SQL, parameters)
         return None if not results else results[0]
